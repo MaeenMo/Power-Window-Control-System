@@ -2,6 +2,7 @@
 #include "task.h"
 #include "queue.h"
 #include "semphr.h"
+#include "timers.h"
 
 #include "Port_Config.h"
 
@@ -22,7 +23,7 @@
 #define PD							2
 #define DU							3
 #define DD							4
-
+#define ALL_BUTTONS  (Driver_Elevate_Button | Driver_Lower_Button | Passenger_Elevate_Button | Passenger_Lower_Button)
 
 bool driver_elevate_button_state;																									// variable for handling the state of the elevator button from the driver side
 bool driver_lower_button_state;																										// variable for handling the state of the lowering button from the driver side
@@ -32,12 +33,15 @@ bool lock_state;                                                                
 int	 window_state = MIDDLE;																												// variable for handling the state of the window window state
 bool operation;																																	// variable for handling the return from the manual control
 int last_task = STOP;
+volatile bool debounce_in_progress = false;
 
 /* Handlers, Semaphores, Mutexes */
 TaskHandle_t 				xDriverWindowElevateTaskHandle 									= NULL;				// handler of the vDriverWindowElevateTask
 TaskHandle_t 				xDriverWindowLowerTaskHandle 										= NULL;				// handler of the vDriverWindowLowerTask
 TaskHandle_t 				xPassengerWindowElevateTaskHandle 							= NULL;				// handler of the vPassengerWindowElevateTask
 TaskHandle_t 				xPassengerWindowLowerTaskHandle 								= NULL;				// handler of the vPassengerWindowLowerTask
+
+TimerHandle_t xDebounceTimer;
 
 /*––– Global semaphore handle –––*/
 static SemaphoreHandle_t xDriverUpSem, xDriverDownSem = NULL;
@@ -65,7 +69,7 @@ void ISRHandlers(void);
 /*
 	Function responsible for handling the interrupts
 */
-
+void vDebounceTimerCallback(TimerHandle_t xTimer);
 
 /*––– MAIN –––*/
 int main(void) {
@@ -106,6 +110,14 @@ int main(void) {
     xTaskCreate(vPassengerWindowElevateTask, "PUp",   128, NULL, 3, &xPassengerWindowElevateTaskHandle);
     xTaskCreate(vPassengerWindowLowerTask, "PDn",    128, NULL, 3, &xPassengerWindowLowerTaskHandle);
 
+    xDebounceTimer = xTimerCreate(
+            "DebounceTimer",                // Timer name
+            pdMS_TO_TICKS(350),              // 20 ms debounce
+            pdFALSE,                        // One-shot timer
+            (void*)0,                       // Timer ID (optional)
+            vDebounceTimerCallback          // Callback function
+    );
+
     // Start scheduler
     vTaskStartScheduler();
 
@@ -121,7 +133,7 @@ void vDriverWindowElevateTask(void *pvParameters) {
         xSemaphoreTake(xDriverUpSem, portMAX_DELAY);
 
         // Debounce
-        vTaskDelay(pdMS_TO_TICKS(50));
+        vTaskDelay(pdMS_TO_TICKS(150));
         driver_elevate_button_state = GPIOPinRead(Buttons_Motor_Port, Driver_Elevate_Button);
 
         if (driver_elevate_button_state == HIGH && window_state != WINDOW_CLOSED) {
@@ -160,7 +172,7 @@ void vDriverWindowLowerTask(void *pvParameters) {
         xSemaphoreTake(xDriverDownSem, portMAX_DELAY);
 
         // Debounce
-        vTaskDelay(pdMS_TO_TICKS(50));
+        vTaskDelay(pdMS_TO_TICKS(150));
         driver_lower_button_state = GPIOPinRead(Buttons_Motor_Port, Driver_Lower_Button);
 
         if (driver_lower_button_state == HIGH && window_state != WINDOW_OPEN) {
@@ -199,7 +211,7 @@ void vPassengerWindowElevateTask(void *pvParameters) {
         xSemaphoreTake(xPassengerUpSem, portMAX_DELAY);
 
         // Debounce
-        vTaskDelay(pdMS_TO_TICKS(50));
+        vTaskDelay(pdMS_TO_TICKS(150));
         passenger_elevate_button_state = GPIOPinRead(Buttons_Motor_Port, Passenger_Elevate_Button);
 
         if (passenger_elevate_button_state == HIGH && window_state != WINDOW_CLOSED) {
@@ -238,7 +250,7 @@ void vPassengerWindowLowerTask(void *pvParameters) {
         xSemaphoreTake(xPassengerDownSem, portMAX_DELAY);
 
         // Debounce
-        vTaskDelay(pdMS_TO_TICKS(50));
+        vTaskDelay(pdMS_TO_TICKS(150));
         passenger_lower_button_state = GPIOPinRead(Buttons_Motor_Port, Passenger_Lower_Button);
 
         if (passenger_lower_button_state == HIGH && window_state != WINDOW_OPEN) {
@@ -279,8 +291,16 @@ void vApplicationIdleHook( void ) {
 /*––– ISR HANDLER –––*/
 void ISRHandlers(void) {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    if (debounce_in_progress) {
+        // Skip handling while debouncing
+        GPIOIntClear(GPIO_PORTA_BASE, ALL_BUTTONS);
+        return;
+    }
+    debounce_in_progress = true;
 
-    SysCtlDelay(SysCtlClockGet() / 3000 * 200);
+    // Start debounce timer for 20ms
+    xTimerStartFromISR(xDebounceTimer, &xHigherPriorityTaskWoken);
+//    SysCtlDelay(SysCtlClockGet() / 3000 * 200);
 
     // Only handling Driver_Elevate_Button here:
     if (GPIOIntStatus(GPIO_PORTA_BASE, Driver_Elevate_Button) == Driver_Elevate_Button) {
@@ -333,3 +353,7 @@ void ISRHandlers(void) {
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
+void vDebounceTimerCallback(TimerHandle_t xTimer) {
+    // Clear debounce flag
+    debounce_in_progress = false;
+}
