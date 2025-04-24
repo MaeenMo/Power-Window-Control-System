@@ -13,10 +13,10 @@
 
 
 /* Global Variables */
-#define WINDOW_OPEN  		        HIGH																											// Saving the state of the open window as 1
-#define WINDOW_CLOSED  	            LOW																												// Saving the state of the closed window as 0
-#define UP							HIGH																											// Saving the UP Direction of window as 1
-#define DOWN						LOW																												// Saving the DOWN Direction of window as 0
+#define WINDOW_OPEN  		        HIGH // Saving the state of the open window as 1
+#define WINDOW_CLOSED  	            LOW // Saving the state of the closed window as 0
+#define UP							HIGH // Saving the UP Direction of window as 1
+#define DOWN						LOW // Saving the DOWN Direction of window as 0
 #define MIDDLE					    2
 #define STOP						0
 #define PU							1
@@ -25,27 +25,27 @@
 #define DD							4
 #define ALL_BUTTONS  (Driver_Elevate_Button | Driver_Lower_Button | Passenger_Elevate_Button | Passenger_Lower_Button)
 
-bool driver_elevate_button_state;																									// variable for handling the state of the elevator button from the driver side
-bool driver_lower_button_state;																										// variable for handling the state of the lowering button from the driver side
-bool passenger_elevate_button_state;																							// variable for handling the state of the elevator button from the Passenger side
-bool passenger_lower_button_state;																								// variable for handling the state of the Lowering button from the Passenger side
-bool lock_state;                                                                                                                  // variable for handling the state of the lock switch
-int	 window_state = MIDDLE;																												// variable for handling the state of the window window state
-bool operation;																																	// variable for handling the return from the manual control
+bool driver_elevate_button_state; // variable for handling the state of the elevator button from the driver side
+bool driver_lower_button_state;	// variable for handling the state of the lowering button from the driver side
+bool passenger_elevate_button_state; // variable for handling the state of the elevator button from the Passenger side
+bool passenger_lower_button_state; // variable for handling the state of the Lowering button from the Passenger side
+bool lock_state; // variable for handling the state of the lock switch
+int	 window_state = MIDDLE;	// variable for handling the state of the window state
+bool operation;	// variable for handling the return from the manual control
 int last_task = STOP;
 volatile bool debounce_in_progress = false;
 
 /* Handlers, Semaphores, Mutexes */
-TaskHandle_t 				xDriverWindowElevateTaskHandle 									= NULL;				// handler of the vDriverWindowElevateTask
-TaskHandle_t 				xDriverWindowLowerTaskHandle 										= NULL;				// handler of the vDriverWindowLowerTask
-TaskHandle_t 				xPassengerWindowElevateTaskHandle 							= NULL;				// handler of the vPassengerWindowElevateTask
-TaskHandle_t 				xPassengerWindowLowerTaskHandle 								= NULL;				// handler of the vPassengerWindowLowerTask
+TaskHandle_t xDriverWindowElevateTaskHandle, xDriverWindowLowerTaskHandle = NULL;	// handler of the vDriverWindowElevateTask and vDriverWindowLowerTask
+TaskHandle_t xPassengerWindowElevateTaskHandle, xPassengerWindowLowerTaskHandle = NULL; // handler of the vPassengerWindowElevateTask and vPassengerWindowLowerTask
+TaskHandle_t xLockWindowsTaskHandle = NULL; // handler of the vLockWindowsTask
 
 TimerHandle_t xDebounceTimer;
 
 /*––– Global semaphore handle –––*/
-static SemaphoreHandle_t xDriverUpSem, xDriverDownSem = NULL;
-static SemaphoreHandle_t xPassengerUpSem, xPassengerDownSem = NULL;
+SemaphoreHandle_t xDriverUpSem, xDriverDownSem = NULL;
+SemaphoreHandle_t xPassengerUpSem, xPassengerDownSem = NULL;
+SemaphoreHandle_t xLockWindowsSem = NULL;
 
 
 
@@ -65,6 +65,10 @@ void vPassengerWindowLowerTask(void *pvParameters);
 /*
 	RTOS task for controlling (lowering) a passenger window from the passenger side
 */
+void vLockWindowsTask(void *pvParameters);
+/*
+    RTOS task for locking/unlocking the control from the passenger side
+*/
 void ISRHandlers(void);
 /*
 	Function responsible for handling the interrupts
@@ -80,54 +84,64 @@ int main(void) {
 
     // Init I/O
     PortA_Config();  // must set PA6, PA7 outputs; PA4..2 inputs w/ digital enable
-//    PortC_Config();  // limit switches, lock switch, IR sensor
+    PortC_Config();  // limit switches, lock switch, IR sensor
 
     // Semaphores
     xDriverUpSem       = xSemaphoreCreateBinary();
     xDriverDownSem     = xSemaphoreCreateBinary();
     xPassengerUpSem    = xSemaphoreCreateBinary();
     xPassengerDownSem  = xSemaphoreCreateBinary();
+    xLockWindowsSem    = xSemaphoreCreateBinary();
 
     // GPIO interrupts
     GPIOIntRegister(GPIO_PORTA_BASE, ISRHandlers);
+    GPIOIntRegister(GPIO_PORTC_BASE, ISRHandlers);
 
     GPIOIntTypeSet(GPIO_PORTA_BASE, Driver_Elevate_Button, GPIO_RISING_EDGE);
     GPIOIntTypeSet(GPIO_PORTA_BASE, Driver_Lower_Button, GPIO_RISING_EDGE);
     GPIOIntTypeSet(GPIO_PORTA_BASE, Passenger_Elevate_Button, GPIO_RISING_EDGE);
     GPIOIntTypeSet(GPIO_PORTA_BASE, Passenger_Lower_Button, GPIO_RISING_EDGE);
 
+    GPIOIntTypeSet(GPIO_PORTC_BASE, Window_Lock_Switch, GPIO_BOTH_EDGES);
 
     GPIOIntEnable(GPIO_PORTA_BASE,
                   Driver_Elevate_Button | Driver_Lower_Button |
                   Passenger_Elevate_Button | Passenger_Lower_Button);
 
+    GPIOIntEnable(GPIO_PORTC_BASE, Window_Lock_Switch);
+
     IntEnable(INT_GPIOA_TM4C123);
-    IntPrioritySet(INT_GPIOA_TM4C123, configMAX_SYSCALL_INTERRUPT_PRIORITY);
+    IntPrioritySet(INT_GPIOA_TM4C123, configMAX_SYSCALL_INTERRUPT_PRIORITY+1);
+    IntEnable(INT_GPIOC_TM4C123);
+    IntPrioritySet(INT_GPIOC_TM4C123, configMAX_SYSCALL_INTERRUPT_PRIORITY);
 
     // Create single-touch driver‑up task
-    xTaskCreate(vDriverWindowElevateTask, "DrvUp", 128, NULL, 4, &xDriverWindowElevateTaskHandle);
-    xTaskCreate(vDriverWindowLowerTask,    "DrvDn",   128, NULL, 4, &xDriverWindowLowerTaskHandle);
-    xTaskCreate(vPassengerWindowElevateTask, "PUp",   128, NULL, 3, &xPassengerWindowElevateTaskHandle);
-    xTaskCreate(vPassengerWindowLowerTask, "PDn",    128, NULL, 3, &xPassengerWindowLowerTaskHandle);
+    xTaskCreate(vDriverWindowElevateTask, "DrvUp", 128, NULL, 3, &xDriverWindowElevateTaskHandle);
+    xTaskCreate(vDriverWindowLowerTask, "DrvDn", 128, NULL, 3, &xDriverWindowLowerTaskHandle);
+    xTaskCreate(vPassengerWindowElevateTask, "PUp", 128, NULL, 3, &xPassengerWindowElevateTaskHandle);
+    xTaskCreate(vPassengerWindowLowerTask, "PDn", 128, NULL, 3, &xPassengerWindowLowerTaskHandle);
+    xTaskCreate(vLockWindowsTask, "LockCtrl", 128, NULL, 4, &xLockWindowsTaskHandle);
 
     xDebounceTimer = xTimerCreate(
             "DebounceTimer",                // Timer name
             pdMS_TO_TICKS(350),              // 20 ms debounce
             pdFALSE,                        // One-shot timer
-            (void*)0,                       // Timer ID (optional)
+            (void*)0,                       // Timer ID
             vDebounceTimerCallback          // Callback function
     );
 
     // Start scheduler
     vTaskStartScheduler();
 
-    while (1) {;
-        // should never get here
-    }
+    while (1);
+    // should never get here
+
 }
 
 /*––– DRIVER ELEVATE TASK –––*/
 void vDriverWindowElevateTask(void *pvParameters) {
+    // taking semaphore at the beginning for blocking the task
+    xSemaphoreTake(xDriverUpSem, 0);
     while (1) {
         // Block until ISR gives us the semaphore
         xSemaphoreTake(xDriverUpSem, portMAX_DELAY);
@@ -167,6 +181,8 @@ void vDriverWindowElevateTask(void *pvParameters) {
 
 /*––– DRIVER LOWER TASK –––*/
 void vDriverWindowLowerTask(void *pvParameters) {
+    // taking semaphore at the beginning for blocking the task
+    xSemaphoreTake(xDriverDownSem, 0);
     while (1) {
         // Block until ISR gives us the semaphore
         xSemaphoreTake(xDriverDownSem, portMAX_DELAY);
@@ -206,6 +222,8 @@ void vDriverWindowLowerTask(void *pvParameters) {
 
 /*––– PASSENGER ELEVATE TASK –––*/
 void vPassengerWindowElevateTask(void *pvParameters) {
+    // taking semaphore at the beginning for blocking the task
+    xSemaphoreTake(xPassengerUpSem, 0);
     while (1) {
         // Block until ISR gives us the semaphore
         xSemaphoreTake(xPassengerUpSem, portMAX_DELAY);
@@ -245,6 +263,8 @@ void vPassengerWindowElevateTask(void *pvParameters) {
 
 /*––– PASSENGER LOWER TASK –––*/
 void vPassengerWindowLowerTask(void *pvParameters) {
+    // taking semaphore at the beginning for blocking the task
+    xSemaphoreTake(xPassengerDownSem, 0);
     while (1) {
         // Block until ISR gives us the semaphore
         xSemaphoreTake(xPassengerDownSem, portMAX_DELAY);
@@ -282,8 +302,43 @@ void vPassengerWindowLowerTask(void *pvParameters) {
     }
 }
 
+void vLockWindowsTask(void *pvParameters) {
+    // taking semaphore at the beginning for blocking the task
+    xSemaphoreTake(xLockWindowsSem, 0);
+    while (1) {
+        // Block until ISR gives us the semaphore
+        xSemaphoreTake(xLockWindowsSem, portMAX_DELAY);
+
+        // Debounce
+        vTaskDelay(pdMS_TO_TICKS(150));
+        lock_state = GPIOPinRead(Sensors_Port, Window_Lock_Switch);
+
+        if (lock_state == HIGH) {
+            // DISABLING THE PASSENGER CONTROL
+            vTaskSuspend(xPassengerWindowElevateTaskHandle);
+            vTaskSuspend(xPassengerWindowLowerTaskHandle);
+        }
+        else {
+            // ALLOWING PASSENGER CONTROL
+            vTaskResume(xPassengerWindowElevateTaskHandle);
+            vTaskResume(xPassengerWindowLowerTaskHandle);
+        }
+
+        // Allow other tasks/idle to run
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+}
+
 /* Idle Task for sleeping the processor */
 void vApplicationIdleHook( void ) {
+    // checking for intial condition of switch
+    lock_state = GPIOPinRead(Sensors_Port,Window_Lock_Switch);
+    // DISABLING THE PASSENGER CONTROL
+    if (lock_state == HIGH){
+        GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
+        vTaskSuspend(xPassengerWindowElevateTaskHandle);
+        vTaskSuspend(xPassengerWindowLowerTaskHandle);
+    }
     /* Put the microcontroller in a low power mode */
     SysCtlSleep();
 }
@@ -300,7 +355,6 @@ void ISRHandlers(void) {
 
     // Start debounce timer for 20ms
     xTimerStartFromISR(xDebounceTimer, &xHigherPriorityTaskWoken);
-//    SysCtlDelay(SysCtlClockGet() / 3000 * 200);
 
     // Only handling Driver_Elevate_Button here:
     if (GPIOIntStatus(GPIO_PORTA_BASE, Driver_Elevate_Button) == Driver_Elevate_Button) {
@@ -350,10 +404,16 @@ void ISRHandlers(void) {
             last_task = STOP;
         }
     }
+    // Only handling Window_Lock_Switch here:
+    else if (GPIOIntStatus(GPIO_PORTC_BASE, Window_Lock_Switch) == Window_Lock_Switch) {
+        GPIOIntClear(GPIO_PORTC_BASE, Window_Lock_Switch);
+
+        // Wake the lock windows task
+        xSemaphoreGiveFromISR(xLockWindowsSem, &xHigherPriorityTaskWoken);
+    }
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 void vDebounceTimerCallback(TimerHandle_t xTimer) {
-    // Clear debounce flag
     debounce_in_progress = false;
 }
