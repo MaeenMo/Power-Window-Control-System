@@ -27,24 +27,24 @@ Project File Date:  04/21/2025
 <h2>Output:</h2>
 *** Using Compiler 'V6.19', folder: 'D:\Programs\Keil_v5\ARM\ARMCLANG\Bin'
 Rebuild target 'Target 1'
+compiling clib_os.c...
+compiling main.c...
+compiling system_TM4C123.c...
 compiling retarget_io.c...
 compiling Port_Config.c...
 compiling os_systick.c...
 compiling freertos_evr.c...
-compiling clib_os.c...
-compiling system_TM4C123.c...
-compiling main.c...
-compiling list.c...
-compiling heap_4.c...
 compiling port.c...
 compiling event_groups.c...
+compiling list.c...
+compiling heap_4.c...
 compiling timers.c...
-assembling startup_TM4C123.s...
 compiling queue.c...
+assembling startup_TM4C123.s...
 compiling cmsis_os2.c...
 compiling tasks.c...
 linking...
-Program Size: Code=18772 RO-data=1508 RW-data=1644 ZI-data=11824  
+Program Size: Code=19064 RO-data=1532 RW-data=1644 ZI-data=11848  
 ".\Objects\power-window-control-system.axf" - 0 Error(s), 0 Warning(s).
 
 <h2>Software Packages used:</h2>
@@ -104,19 +104,19 @@ Package Vendor: Keil
       Include file:  CMSIS/RTOS2/FreeRTOS/Config/FreeRTOSConfig.h
 
    * Component: ARM.FreeRTOS::RTOS:Core:Cortex-M:11.1.0
+      Source file:   CMSIS/RTOS2/FreeRTOS/Source/freertos_evr.c
+      Source file:   Source/list.c
+      Source file:   Source/queue.c
+      Source file:   Source/tasks.c
       Include file:  Source/include/FreeRTOS.h
       Include file:  Source/include/queue.h
       Include file:  Source/include/semphr.h
       Include file:  Source/include/task.h
-      Source file:   Source/tasks.c
       Source file:   Source/portable/GCC/ARM_CM4F/port.c
-      Source file:   Source/list.c
-      Source file:   Source/queue.c
-      Source file:   CMSIS/RTOS2/FreeRTOS/Source/freertos_evr.c
 
    * Component: ARM.FreeRTOS::RTOS:Event Groups:11.1.0
-      Include file:  Source/include/event_groups.h
       Source file:   Source/event_groups.c
+      Include file:  Source/include/event_groups.h
 
    * Component: ARM.FreeRTOS::RTOS:Heap:Heap_4:11.1.0
       Source file:   Source/portable/MemMang/heap_4.c
@@ -131,9 +131,9 @@ Package Vendor: Keil
       Source file:   CMSIS/RTOS2/Source/os_systick.c
 
    * Component: ARM::CMSIS:RTOS2:FreeRTOS:Cortex-M:11.1.0
-      Source file:   CMSIS/RTOS2/FreeRTOS/Source/clib_os.c
-      Include file:  CMSIS/RTOS2/FreeRTOS/Include/freertos_mpool.h
       Source file:   CMSIS/RTOS2/FreeRTOS/Source/cmsis_os2.c
+      Include file:  CMSIS/RTOS2/FreeRTOS/Include/freertos_mpool.h
+      Source file:   CMSIS/RTOS2/FreeRTOS/Source/clib_os.c
 
    * Component: Keil.ARM Compiler::Compiler:I/O:STDIN:ITM:1.2.0
       Source file:   Source/retarget_io.c
@@ -142,9 +142,9 @@ Package Vendor: Keil
       Source file:   Source/retarget_io.c
 
    * Component: Keil::Device:Startup:1.0.1
-      Include file:  Device/Include/TM4C123/TM4C123.h
       Source file:   Device/Source/ARM/startup_TM4C123.s
       Source file:   Device/Source/system_TM4C123.c
+      Include file:  Device/Include/TM4C123/TM4C123.h
 Build Time Elapsed:  00:00:01
 </pre>
 </body>
