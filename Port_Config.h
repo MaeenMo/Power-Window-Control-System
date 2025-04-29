@@ -155,13 +155,15 @@
 #define Window_Lower_Limit						(1<<6)
 #define Window_Lock_Switch						(1<<7)
 
+#define GPIO_PB2_I2C0SCL        0x00010803
+#define GPIO_PB3_I2C0SDA        0x00010C03
 
 #define LOW															0
 #define HIGH														1
 
 void PortA_Config(void);
+void PortB_Config(void);
 void PortC_Config(void);
-void PortF_Config(void);
 
 
 #endif

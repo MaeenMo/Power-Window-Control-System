@@ -36,4 +36,5 @@
   ..\Power-Window-Control-System\driverlib\pin_map.h \
   ..\Power-Window-Control-System\driverlib\interrupt.h \
   ..\Power-Window-Control-System\driverlib\i2c.h \
-  ..\Power-Window-Control-System\driverlib\qei.h
+  ..\Power-Window-Control-System\driverlib\qei.h \
+  ..\Power-Window-Control-System\lcd_i2c.h

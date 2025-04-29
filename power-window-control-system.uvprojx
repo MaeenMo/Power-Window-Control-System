@@ -395,6 +395,11 @@
               <FileType>1</FileType>
               <FilePath>.\Port_Config.c</FilePath>
             </File>
+            <File>
+              <FileName>lcd_i2c.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\lcd_i2c.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

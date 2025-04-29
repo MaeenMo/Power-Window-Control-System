@@ -10,9 +10,12 @@
 #include "driverlib/i2c.h"
 #include "driverlib/qei.h"
 
+#include "lcd_i2c.h"
 
 
 /* Global Variables */
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "EndlessLoop"
 #define WINDOW_OPEN  		        HIGH // Saving the state of the open window as 1
 #define WINDOW_CLOSED  	            LOW // Saving the state of the closed window as 0
 #define UP							HIGH // Saving the UP Direction of window as 1
@@ -23,7 +26,7 @@
 #define PD							2
 #define DU							3
 #define DD							4
-#define ALL_BUTTONS  (Driver_Elevate_Button | Driver_Lower_Button | Passenger_Elevate_Button | Passenger_Lower_Button)
+
 
 bool driver_elevate_button_state; // variable for handling the state of the elevator button from the driver side
 bool driver_lower_button_state;	// variable for handling the state of the lowering button from the driver side
@@ -37,19 +40,41 @@ bool operation;	// variable for handling the return from the manual control
 int last_task = STOP;
 volatile bool debounce_in_progress = false;
 
+// Encoder globals
+//static volatile uint32_t TOTAL_PULSES = 500UL;   // pulses from top→bottom
+//volatile uint32_t windowPct      = 0;        // 0–100%
+
+typedef struct {
+    int      window_state;    // use your DU, DD, STOP, etc.
+    bool     lock_state;
+    uint32_t percent_open;
+} StatusMsg_t;
+
+// custom 8×5 “lock” glyph
+static const uint8_t lockChar[8] = {
+        0x0E, 0x11, 0x11, 0x11,
+        0x1F, 0x1B, 0x1B, 0x1F
+};
+static const uint8_t unlockChar[8] = {
+        0x0E, 0x11, 0x10, 0x10,
+        0x1F, 0x1B, 0x1B, 0x1F
+};
+
+static QueueHandle_t xStatusQueue;
+
 /* Handlers, Semaphores, Mutexes */
-TaskHandle_t xDriverWindowElevateTaskHandle, xDriverWindowLowerTaskHandle = NULL;	// handler of the vDriverWindowElevateTask and vDriverWindowLowerTask
-TaskHandle_t xPassengerWindowElevateTaskHandle, xPassengerWindowLowerTaskHandle = NULL; // handler of the vPassengerWindowElevateTask and vPassengerWindowLowerTask
+TaskHandle_t xDriverWindowElevateTaskHandle = NULL, xDriverWindowLowerTaskHandle = NULL;	// handler of the vDriverWindowElevateTask and vDriverWindowLowerTask
+TaskHandle_t xPassengerWindowElevateTaskHandle = NULL, xPassengerWindowLowerTaskHandle = NULL; // handler of the vPassengerWindowElevateTask and vPassengerWindowLowerTask
 TaskHandle_t xLockWindowsTaskHandle = NULL; // handler of the vLockWindowsTask
-TaskHandle_t xUpperLimitTaskHandle, xLowerLimitTaskHandle = NULL; // handler of the vUpperLimitTask
+TaskHandle_t xUpperLimitTaskHandle = NULL, xLowerLimitTaskHandle = NULL; // handler of the vUpperLimitTask
 
 TimerHandle_t xDebounceTimer;
 
 /*––– Global semaphore handle –––*/
-SemaphoreHandle_t xDriverUpSem, xDriverDownSem = NULL;
-SemaphoreHandle_t xPassengerUpSem, xPassengerDownSem = NULL;
+SemaphoreHandle_t xDriverUpSem = NULL, xDriverDownSem = NULL;
+SemaphoreHandle_t xPassengerUpSem = NULL, xPassengerDownSem = NULL;
 SemaphoreHandle_t xLockWindowsSem = NULL;
-SemaphoreHandle_t xUpperLimitSem, xLowerLimitSem = NULL;
+SemaphoreHandle_t xUpperLimitSem = NULL, xLowerLimitSem = NULL;
 
 
 
@@ -67,6 +92,14 @@ void vUpperLimitTask(void *pvParameters); // RTOS task for reacting to reaching 
 
 void vLowerLimitTask(void *pvParameters); // RTOS task for reacting to reaching the lower limit
 
+//void vCalibrationTask(void *pv);
+
+//void vEncoderMonitorTask(void *pvParameters); // RTOS task for monitoring the encoder
+
+void vLCDTask(void *pvParameters); // RTOS task for updating the LCD display
+
+void vStatusProducerTask(void *pv); // RTOS task for producing status messages
+
 void ISRHandlers(void); // ISR handler for GPIO interrupts
 
 void vDebounceTimerCallback(TimerHandle_t xTimer);  // Callback function for the debounce timer
@@ -80,7 +113,49 @@ int main(void) {
 
     // Init I/O
     PortA_Config();  // must set PA6, PA7 outputs; PA4..2 inputs w/ digital enable
+    PortB_Config();  // QEI inputs (Encoder) / LCD
     PortC_Config();  // limit switches, lock switch, IR sensor
+
+    // LCD  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    PortB_Config();           // sets PB2/SCL, PB3/SDA
+    I2CMasterInitExpClk(I2C0_BASE, SysCtlClockGet(), false);
+
+    LCD_I2C_Init();
+    LCD_I2C_CreateChar(0, lockChar);
+    LCD_I2C_CreateChar(1, unlockChar);
+
+    // --- create queue & tasks ---
+    xStatusQueue = xQueueCreate(1, sizeof(StatusMsg_t));
+    xTaskCreate(vLCDTask,            "LCD",   128, NULL, 2, NULL);
+    xTaskCreate(vStatusProducerTask, "Stat",  128, NULL, 1, NULL);
+
+//    // 3) QEI0 on PB6/PB7
+//    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+//    SysCtlPeripheralEnable(SYSCTL_PERIPH_QEI0);
+//    while(!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOB)) {}
+//    while(!SysCtlPeripheralReady(SYSCTL_PERIPH_QEI0)) {}
+//
+//    // Configure PB6/PB7 for QEI signals
+//    GPIOPinTypeQEI(GPIO_PORTB_BASE, GPIO_PIN_6 | GPIO_PIN_7);
+//
+//    // Manually set PCTL bits for PB6 = PHA0, PB7 = PHB0 (function 5)
+//    //   PB6 PCTL field = bits [27:24], PB7 = [31:28].
+//    GPIO_PORTB_PCTL_R = (GPIO_PORTB_PCTL_R
+//                         & ~(((uint32_t)0xF << (6*4)) | ((uint32_t)0xF << (7*4))))
+//                        | ((uint32_t)5 << (6*4))
+//                        | ((uint32_t)5 << (7*4));
+//
+//    // Initialize QEI: capture both edges, quadrature, no auto-reset
+//    GPIOPadConfigSet(GPIO_PORTB_BASE,
+//                     GPIO_PIN_6|GPIO_PIN_7,
+//                     GPIO_STRENGTH_2MA,
+//                     GPIO_PIN_TYPE_STD_WPU);
+//    QEIConfigure(QEI0_BASE,
+//                 QEI_CONFIG_CAPTURE_A_B
+//                 | QEI_CONFIG_QUADRATURE
+//                 | QEI_CONFIG_NO_RESET,
+//                 0);
+//    QEIEnable(QEI0_BASE);
 
     // Semaphores
     xDriverUpSem       = xSemaphoreCreateBinary();
@@ -123,6 +198,8 @@ int main(void) {
     xTaskCreate(vLockWindowsTask, "LockCtrl", 128, NULL, 4, &xLockWindowsTaskHandle);
     xTaskCreate(vUpperLimitTask, "UpperLimit", 128, NULL, 5, &xUpperLimitTaskHandle);
     xTaskCreate(vLowerLimitTask, "LowerLimit", 128, NULL, 5, &xLowerLimitTaskHandle);
+//    xTaskCreate(vEncoderMonitorTask, "EncMon", 128, NULL, 1, NULL);
+//    xTaskCreate(vCalibrationTask, "Calib", 128, NULL, 2, NULL);
 
     xDebounceTimer = xTimerCreate(
             "DebounceTimer",                // Timer name
@@ -139,6 +216,65 @@ int main(void) {
     // should never get here
 
 }
+
+//—– LCD updater task —–//
+void vLCDTask(void *pvParameters) {
+    StatusMsg_t msg;
+    char buf[17];
+
+    while (1) {
+        // Wait indefinitely for a new status update
+        if (xQueueReceive(xStatusQueue, &msg, portMAX_DELAY) == pdTRUE) {
+            LCD_I2C_Clear();
+
+            // Line 1: window state
+            LCD_I2C_SetCursor(0, 0);
+            switch(msg.window_state) {
+                case DU:  LCD_I2C_Print("WinStat: Opening"); break;
+                case DD:  LCD_I2C_Print("WinStat: Closing"); break;
+                case PU:  LCD_I2C_Print("WinStat: Opening"); break;
+                case PD:  LCD_I2C_Print("WinStat: Closing"); break;
+                default: {
+                    if (window_state == WINDOW_OPEN)
+                        LCD_I2C_Print("WinStat: Opened");
+                    else if (window_state == WINDOW_CLOSED)
+                        LCD_I2C_Print("WinStat: Closed");
+                    else
+                        LCD_I2C_Print("WinStat: Stopped");
+                }
+            }
+
+            // Line 2: lock symbol + percentage
+            LCD_I2C_SetCursor(1, 0);
+            LCD_I2C_Print("WinLk");
+            LCD_I2C_WriteChar(msg.lock_state ? 0 : 1);
+            snprintf(buf, sizeof(buf), " WPos:%u%%", (unsigned)msg.percent_open);
+            LCD_I2C_Print(buf);
+        }
+    }
+}
+
+//—– Periodic status producer (for now sends static “0% stopped unlocked”) —–//
+void vStatusProducerTask(void *pv) {
+    StatusMsg_t msg, prev_msg = {-1, -1, 255};
+
+    while (1) {
+        msg.window_state  = last_task;
+        msg.lock_state    = lock_state;
+        msg.percent_open  = 0;
+
+        // Only send if something changed
+        if (msg.window_state != prev_msg.window_state ||
+            msg.lock_state   != prev_msg.lock_state ||
+            msg.percent_open != prev_msg.percent_open) {
+            xQueueOverwrite(xStatusQueue, &msg);
+            prev_msg = msg;
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(100));  // sample rate
+    }
+}
+
 
 /*––– DRIVER ELEVATE TASK –––*/
 void vDriverWindowElevateTask(void *pvParameters) {
@@ -177,7 +313,7 @@ void vDriverWindowElevateTask(void *pvParameters) {
         }
 
         // Allow other tasks/idle to run
-        vTaskDelay(pdMS_TO_TICKS(10));
+//        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
@@ -218,7 +354,7 @@ void vDriverWindowLowerTask(void *pvParameters) {
         }
 
         // Allow other tasks/idle to run
-        vTaskDelay(pdMS_TO_TICKS(10));
+//        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
@@ -259,7 +395,7 @@ void vPassengerWindowElevateTask(void *pvParameters) {
         }
 
         // Allow other tasks/idle to run
-        vTaskDelay(pdMS_TO_TICKS(10));
+//        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
@@ -300,7 +436,7 @@ void vPassengerWindowLowerTask(void *pvParameters) {
         }
 
         // Allow other tasks/idle to run
-        vTaskDelay(pdMS_TO_TICKS(10));
+//        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
@@ -314,18 +450,23 @@ void vLockWindowsTask(void *pvParameters) {
         lock_state = GPIOPinRead(Sensors_Port, Window_Lock_Switch);
 
         if (lock_state == HIGH) {
-            // DISABLING THE PASSENGER CONTROL
+            if(passenger_elevate_button_state || passenger_lower_button_state){
+                GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
+                last_task = STOP;
+            }
+
+            // Disabling passenger control
             vTaskSuspend(xPassengerWindowElevateTaskHandle);
             vTaskSuspend(xPassengerWindowLowerTaskHandle);
         }
         else {
-            // ALLOWING PASSENGER CONTROL
+            // Allowing passenger control
             vTaskResume(xPassengerWindowElevateTaskHandle);
             vTaskResume(xPassengerWindowLowerTaskHandle);
         }
 
         // Allow other tasks/idle to run
-        vTaskDelay(pdMS_TO_TICKS(10));
+//        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
@@ -342,10 +483,13 @@ void vUpperLimitTask(void *pvParameters) {
 
         // Stopping the motor at upper limit
         if (upper_limit_switch_state == HIGH && operation == UP) {
+            // stop motor…
             GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
-            window_state = WINDOW_CLOSED;
+            window_state = WINDOW_CLOSED; last_task = STOP;
             vTaskSuspend(xDriverWindowElevateTaskHandle);
             vTaskSuspend(xPassengerWindowElevateTaskHandle);
+            // Calibrate top = zero pulses
+//            QEIPositionSet(QEI0_BASE, 0);
         }
         else {
             // Re-allow window closing option
@@ -370,8 +514,13 @@ void vLowerLimitTask(void *pvParameters) {
         if (lower_limit_switch_state == HIGH && operation == DOWN) {
             GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1 | DC_Motor_In2, 0);
             window_state = WINDOW_OPEN;
+            last_task = STOP;
             vTaskSuspend(xDriverWindowLowerTaskHandle);
             vTaskSuspend(xPassengerWindowLowerTaskHandle);
+            // Calibrate bottom = count pulses
+//            QEIPositionSet(QEI0_BASE, 0);
+//            vTaskDelay(pdMS_TO_TICKS(10));
+//            TOTAL_PULSES = QEIPositionGet(QEI0_BASE);
         } else {
             // Re-allow window opening option
             vTaskResume(xDriverWindowLowerTaskHandle);
@@ -380,15 +529,40 @@ void vLowerLimitTask(void *pvParameters) {
     }
 }
 
+//void vCalibrationTask(void *pv) {
+//    // Drive down at half-speed (or by hand) until lower limit trips
+//    GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, DC_Motor_In2);
+//    // Block here until the switch reads HIGH
+//    while(GPIOPinRead(Sensors_Port, Window_Lower_Limit)==LOW) {
+//        vTaskDelay(pdMS_TO_TICKS(10));
+//    }
+//    GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
+//
+//    // Now record TOTAL_PULSES
+//    QEIPositionSet(QEI0_BASE, 0);
+//    vTaskDelay(pdMS_TO_TICKS(20)); // debounce
+//    TOTAL_PULSES = QEIPositionGet(QEI0_BASE);
+//
+//    // Delete self
+//    vTaskDelete(NULL);
+//}
+
+/*––– ENCODER MONITOR –––*/
+//void vEncoderMonitorTask(void *pv) {
+//    while (1) {
+//        uint32_t pos = QEIPositionGet(QEI0_BASE);
+//        // Always compute pct against a test constant
+//        windowPct = (pos * 100UL) / TOTAL_PULSES;
+//        vTaskDelay(pdMS_TO_TICKS(100));
+//    }
+//}
+
 /* Idle Task for sleeping the processor */
 void vApplicationIdleHook( void ) {
-    // checking for intial condition of switch
+    // Checking for initial condition of switch
     lock_state = GPIOPinRead(Sensors_Port,Window_Lock_Switch);
-    // DISABLING THE PASSENGER CONTROL
+    // Disabling the passenger control
     if (lock_state == HIGH){
-        if (last_task == PU || last_task == PD) {
-            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
-        }
         vTaskSuspend(xPassengerWindowElevateTaskHandle);
         vTaskSuspend(xPassengerWindowLowerTaskHandle);
     }
@@ -399,20 +573,28 @@ void vApplicationIdleHook( void ) {
 /*––– ISR HANDLER –––*/
 void ISRHandlers(void) {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    if (debounce_in_progress) {
-        // Skip handling while debouncing
-        GPIOIntClear(GPIO_PORTA_BASE, ALL_BUTTONS);
+
+    // Read *all* pending (masked) interrupts on each port
+    uint32_t a = GPIOIntStatus(GPIO_PORTA_BASE, true);
+    uint32_t c = GPIOIntStatus(GPIO_PORTC_BASE, true);
+
+    // If it's *only* a button bounce, and we're still debouncing, clear PORTA *and* PORTC (so limit-switch flags don't stick) and exit.
+    if( debounce_in_progress && a )
+    {
+        GPIOIntClear(GPIO_PORTA_BASE, a);
+        GPIOIntClear(GPIO_PORTC_BASE, c);
         return;
     }
-//    debounce_in_progress = true;
 
-    // Start debounce timer for 20ms
-//    xTimerStartFromISR(xDebounceTimer, &xHigherPriorityTaskWoken);
+    // If this is the *first* button edge, start the debounce timer
+    if( a )
+    {
+        debounce_in_progress = true;
+        xTimerStartFromISR(xDebounceTimer, &xHigherPriorityTaskWoken);
+    }
 
-    // Only handling Driver_Elevate_Button here:
-    if (GPIOIntStatus(GPIO_PORTA_BASE, Driver_Elevate_Button) == Driver_Elevate_Button) {
-        GPIOIntClear(GPIO_PORTA_BASE, Driver_Elevate_Button);
-
+    // — PORT A —
+    if (a & Driver_Elevate_Button) {
         if(last_task == STOP){
             // Wake the driver‑up task
             xSemaphoreGiveFromISR(xDriverUpSem, &xHigherPriorityTaskWoken);
@@ -421,22 +603,16 @@ void ISRHandlers(void) {
             last_task = STOP;
         }
     }
-    // Only handling Driver_Lower_Button here:
-    else if (GPIOIntStatus(GPIO_PORTA_BASE, Driver_Lower_Button) == Driver_Lower_Button) {
-        GPIOIntClear(GPIO_PORTA_BASE, Driver_Lower_Button);
-
-        if(last_task == STOP){
-            // Wake the driver‑down task
+    else if (a & Driver_Lower_Button) {
+        if (last_task == STOP) {
+            // Wake the passenger‑up task
             xSemaphoreGiveFromISR(xDriverDownSem, &xHigherPriorityTaskWoken);
-        } else if(last_task == PU || last_task == DU || last_task == DD || last_task == PD){
+        } else if (lock_state == LOW && (last_task == PU || last_task == DU || last_task == DD || last_task == PD)) {
             GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
             last_task = STOP;
         }
     }
-    // Only handling Passenger_Elevate_Button here:
-    else if (GPIOIntStatus(GPIO_PORTA_BASE, Passenger_Elevate_Button) == Passenger_Elevate_Button) {
-        GPIOIntClear(GPIO_PORTA_BASE, Passenger_Elevate_Button);
-
+    else if (a & Passenger_Elevate_Button) {
         if (lock_state == LOW && last_task == STOP) {
             // Wake the passenger‑up task
             xSemaphoreGiveFromISR(xPassengerUpSem, &xHigherPriorityTaskWoken);
@@ -445,10 +621,7 @@ void ISRHandlers(void) {
             last_task = STOP;
         }
     }
-    // Only handling Passenger_Lower_Button here:
-    else if (GPIOIntStatus(GPIO_PORTA_BASE, Passenger_Lower_Button) == Passenger_Lower_Button) {
-        GPIOIntClear(GPIO_PORTA_BASE, Passenger_Lower_Button);
-
+    else if (a & Passenger_Lower_Button) {
         if (lock_state == LOW && last_task == STOP) {
             // Wake the passenger‑down task
             xSemaphoreGiveFromISR(xPassengerDownSem, &xHigherPriorityTaskWoken);
@@ -457,25 +630,17 @@ void ISRHandlers(void) {
             last_task = STOP;
         }
     }
-    // Only handling Window_Lock_Switch here:
-    else if (GPIOIntStatus(GPIO_PORTC_BASE, Window_Lock_Switch) == Window_Lock_Switch) {
+    // — PORT C —
+    else if (c & Window_Lock_Switch) {
         GPIOIntClear(GPIO_PORTC_BASE, Window_Lock_Switch);
-
-        // Wake the lock windows task
         xSemaphoreGiveFromISR(xLockWindowsSem, &xHigherPriorityTaskWoken);
     }
-    // Only handling Window_Upper_Limit here:
-    else if (GPIOIntStatus(GPIO_PORTC_BASE, Window_Upper_Limit) == Window_Upper_Limit) {
+    else if (c & Window_Upper_Limit) {
         GPIOIntClear(GPIO_PORTC_BASE, Window_Upper_Limit);
-
-        // Wake the upper limit task
         xSemaphoreGiveFromISR(xUpperLimitSem, &xHigherPriorityTaskWoken);
     }
-    // Only handling Window_Lower_Limit here:
-    else if (GPIOIntStatus(GPIO_PORTC_BASE, Window_Lower_Limit) == Window_Lower_Limit) {
+    else if (c & Window_Lower_Limit) {
         GPIOIntClear(GPIO_PORTC_BASE, Window_Lower_Limit);
-
-        // Wake the lower limit task
         xSemaphoreGiveFromISR(xLowerLimitSem, &xHigherPriorityTaskWoken);
     }
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
@@ -484,3 +649,5 @@ void ISRHandlers(void) {
 void vDebounceTimerCallback(TimerHandle_t xTimer) {
     debounce_in_progress = false;
 }
+
+#pragma clang diagnostic pop
