@@ -26,6 +26,8 @@
 #define PD							2
 #define DU							3
 #define DD							4
+#define ON                          LOW
+#define OFF                         HIGH
 
 
 bool driver_elevate_button_state; // variable for handling the state of the elevator button from the driver side
@@ -230,10 +232,10 @@ void vLCDTask(void *pvParameters) {
             // Line 1: window state
             LCD_I2C_SetCursor(0, 0);
             switch(msg.window_state) {
-                case DU:  LCD_I2C_Print("WinStat: Opening"); break;
-                case DD:  LCD_I2C_Print("WinStat: Closing"); break;
-                case PU:  LCD_I2C_Print("WinStat: Opening"); break;
-                case PD:  LCD_I2C_Print("WinStat: Closing"); break;
+                case DU:  LCD_I2C_Print("WinStat: Closing"); break;
+                case DD:  LCD_I2C_Print("WinStat: Opening"); break;
+                case PU:  LCD_I2C_Print("WinStat: Closing"); break;
+                case PD:  LCD_I2C_Print("WinStat: Opening"); break;
                 default: {
                     if (window_state == WINDOW_OPEN)
                         LCD_I2C_Print("WinStat: Opened");
@@ -247,7 +249,7 @@ void vLCDTask(void *pvParameters) {
             // Line 2: lock symbol + percentage
             LCD_I2C_SetCursor(1, 0);
             LCD_I2C_Print("WinLk");
-            LCD_I2C_WriteChar(msg.lock_state ? 0 : 1);
+            LCD_I2C_WriteChar(msg.lock_state ? 1 : 0);
             snprintf(buf, sizeof(buf), " WPos:%u%%", (unsigned)msg.percent_open);
             LCD_I2C_Print(buf);
         }
@@ -449,7 +451,7 @@ void vLockWindowsTask(void *pvParameters) {
 
         lock_state = GPIOPinRead(Sensors_Port, Window_Lock_Switch);
 
-        if (lock_state == HIGH) {
+        if (lock_state == LOW) {
             if(passenger_elevate_button_state || passenger_lower_button_state){
                 GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
                 last_task = STOP;
@@ -562,7 +564,7 @@ void vApplicationIdleHook( void ) {
     // Checking for initial condition of switch
     lock_state = GPIOPinRead(Sensors_Port,Window_Lock_Switch);
     // Disabling the passenger control
-    if (lock_state == HIGH){
+    if (lock_state == LOW){
         vTaskSuspend(xPassengerWindowElevateTaskHandle);
         vTaskSuspend(xPassengerWindowLowerTaskHandle);
     }
@@ -607,25 +609,25 @@ void ISRHandlers(void) {
         if (last_task == STOP) {
             // Wake the passenger‑up task
             xSemaphoreGiveFromISR(xDriverDownSem, &xHigherPriorityTaskWoken);
-        } else if (lock_state == LOW && (last_task == PU || last_task == DU || last_task == DD || last_task == PD)) {
+        } else if (last_task == PU || last_task == DU || last_task == DD || last_task == PD) {
             GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
             last_task = STOP;
         }
     }
     else if (a & Passenger_Elevate_Button) {
-        if (lock_state == LOW && last_task == STOP) {
+        if (lock_state == HIGH && last_task == STOP) {
             // Wake the passenger‑up task
             xSemaphoreGiveFromISR(xPassengerUpSem, &xHigherPriorityTaskWoken);
-        } else if (lock_state == LOW && (last_task == PU || last_task == DU || last_task == DD || last_task == PD)) {
+        } else if (lock_state == HIGH && (last_task == PU || last_task == DU || last_task == DD || last_task == PD)) {
             GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
             last_task = STOP;
         }
     }
     else if (a & Passenger_Lower_Button) {
-        if (lock_state == LOW && last_task == STOP) {
+        if (lock_state == HIGH && last_task == STOP) {
             // Wake the passenger‑down task
             xSemaphoreGiveFromISR(xPassengerDownSem, &xHigherPriorityTaskWoken);
-        } else if (lock_state == LOW && (last_task == PU || last_task == DU || last_task == DD || last_task == PD)) {
+        } else if (lock_state == HIGH && (last_task == PU || last_task == DU || last_task == DD || last_task == PD)) {
             GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
             last_task = STOP;
         }
