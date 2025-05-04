@@ -115,11 +115,10 @@ int main(void) {
 
     // Init I/O
     PortA_Config();  // must set PA6, PA7 outputs; PA4..2 inputs w/ digital enable
-    PortB_Config();  // QEI inputs (Encoder) / LCD
+    PortB_Config();  // QEI inputs (Encoder) / LCD sets PB2/SCL, PB3/SDA
     PortC_Config();  // limit switches, lock switch, IR sensor
 
-    // LCD  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-    PortB_Config();           // sets PB2/SCL, PB3/SDA
+    // LCD
     I2CMasterInitExpClk(I2C0_BASE, SysCtlClockGet(), false);
 
     LCD_I2C_Init();
@@ -308,14 +307,19 @@ void vDriverWindowElevateTask(void *pvParameters) {
         else if (driver_elevate_button_state == LOW && window_state != WINDOW_CLOSED) {
             // === ONE‑TOUCH AUTO MODE ===
             // Start motor up
-            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, DC_Motor_In1);
-            operation = UP;
-            window_state = MIDDLE;
-            last_task = DU;
+            uint8_t state = false;
+            while (!state && window_state != WINDOW_CLOSED) {
+                GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, DC_Motor_In1);
+                operation = UP;
+                window_state = MIDDLE;
+                last_task = DU;
+                state = GPIOPinRead(Buttons_Motor_Port, Driver_Elevate_Button | Driver_Lower_Button | Passenger_Elevate_Button | Passenger_Lower_Button);
+                vTaskDelay(pdMS_TO_TICKS(10));
+            }
+            // Stop
+            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
+            last_task = STOP;
         }
-
-        // Allow other tasks/idle to run
-//        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
@@ -349,14 +353,19 @@ void vDriverWindowLowerTask(void *pvParameters) {
         else if (driver_lower_button_state == LOW && window_state != WINDOW_OPEN) {
             // === ONE‑TOUCH AUTO MODE ===
             // Start motor down
-            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, DC_Motor_In2);
-            operation = DOWN;
-            window_state = MIDDLE;
-            last_task = DD;
+            uint8_t state = false;
+            while (!state && window_state != WINDOW_OPEN) {
+                GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, DC_Motor_In2);
+                operation = DOWN;
+                window_state = MIDDLE;
+                last_task = DD;
+                state = GPIOPinRead(Buttons_Motor_Port, Driver_Elevate_Button | Driver_Lower_Button | Passenger_Elevate_Button | Passenger_Lower_Button);
+                vTaskDelay(pdMS_TO_TICKS(10));
+            }
+            // Stop
+            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
+            last_task = STOP;
         }
-
-        // Allow other tasks/idle to run
-//        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
@@ -390,14 +399,19 @@ void vPassengerWindowElevateTask(void *pvParameters) {
         else if (passenger_elevate_button_state == LOW && window_state != WINDOW_CLOSED) {
             // === ONE‑TOUCH AUTO MODE ===
             // Start motor up
-            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, DC_Motor_In1);
-            operation = UP;
-            last_task = PU;
-            window_state = MIDDLE;
+            uint8_t state = false;
+            while (!state && window_state != WINDOW_CLOSED) {
+                GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, DC_Motor_In1);
+                operation = UP;
+                last_task = PU;
+                window_state = MIDDLE;
+                state = GPIOPinRead(Buttons_Motor_Port, Driver_Elevate_Button | Driver_Lower_Button | Passenger_Elevate_Button | Passenger_Lower_Button) && lock_state;
+                vTaskDelay(pdMS_TO_TICKS(10));
+            }
+            // Stop
+            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
+            last_task = STOP;
         }
-
-        // Allow other tasks/idle to run
-//        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
@@ -431,14 +445,19 @@ void vPassengerWindowLowerTask(void *pvParameters) {
         else if (passenger_lower_button_state == LOW && window_state != WINDOW_OPEN) {
             // === ONE‑TOUCH AUTO MODE ===
             // Start motor down
-            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, DC_Motor_In2);
-            operation = DOWN;
-            last_task = PD;
-            window_state = MIDDLE;
+            uint8_t state = false;
+            while (!state && window_state != WINDOW_OPEN) {
+                GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, DC_Motor_In2);
+                operation = DOWN;
+                last_task = PD;
+                window_state = MIDDLE;
+                state = GPIOPinRead(Buttons_Motor_Port, Driver_Elevate_Button | Driver_Lower_Button | Passenger_Elevate_Button | Passenger_Lower_Button) && lock_state;
+                vTaskDelay(pdMS_TO_TICKS(10));
+            }
+            // Stop
+            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
+            last_task = STOP;
         }
-
-        // Allow other tasks/idle to run
-//        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
@@ -466,9 +485,6 @@ void vLockWindowsTask(void *pvParameters) {
             vTaskResume(xPassengerWindowElevateTaskHandle);
             vTaskResume(xPassengerWindowLowerTaskHandle);
         }
-
-        // Allow other tasks/idle to run
-//        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
@@ -487,7 +503,8 @@ void vUpperLimitTask(void *pvParameters) {
         if (upper_limit_switch_state == HIGH && operation == UP) {
             // stop motor…
             GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
-            window_state = WINDOW_CLOSED; last_task = STOP;
+            last_task = STOP;
+            window_state = WINDOW_CLOSED;
             vTaskSuspend(xDriverWindowElevateTaskHandle);
             vTaskSuspend(xPassengerWindowElevateTaskHandle);
             // Calibrate top = zero pulses
@@ -515,8 +532,8 @@ void vLowerLimitTask(void *pvParameters) {
         // Stopping the motor at lower limit
         if (lower_limit_switch_state == HIGH && operation == DOWN) {
             GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1 | DC_Motor_In2, 0);
-            window_state = WINDOW_OPEN;
             last_task = STOP;
+            window_state = WINDOW_OPEN;
             vTaskSuspend(xDriverWindowLowerTaskHandle);
             vTaskSuspend(xPassengerWindowLowerTaskHandle);
             // Calibrate bottom = count pulses
@@ -600,36 +617,24 @@ void ISRHandlers(void) {
         if(last_task == STOP){
             // Wake the driver‑up task
             xSemaphoreGiveFromISR(xDriverUpSem, &xHigherPriorityTaskWoken);
-        } else if(last_task == PU || last_task == DU || last_task == DD || last_task == PD){
-            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
-            last_task = STOP;
         }
     }
     else if (a & Driver_Lower_Button) {
         if (last_task == STOP) {
             // Wake the passenger‑up task
             xSemaphoreGiveFromISR(xDriverDownSem, &xHigherPriorityTaskWoken);
-        } else if (last_task == PU || last_task == DU || last_task == DD || last_task == PD) {
-            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
-            last_task = STOP;
         }
     }
     else if (a & Passenger_Elevate_Button) {
         if (lock_state == HIGH && last_task == STOP) {
             // Wake the passenger‑up task
             xSemaphoreGiveFromISR(xPassengerUpSem, &xHigherPriorityTaskWoken);
-        } else if (lock_state == HIGH && (last_task == PU || last_task == DU || last_task == DD || last_task == PD)) {
-            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
-            last_task = STOP;
         }
     }
     else if (a & Passenger_Lower_Button) {
         if (lock_state == HIGH && last_task == STOP) {
             // Wake the passenger‑down task
             xSemaphoreGiveFromISR(xPassengerDownSem, &xHigherPriorityTaskWoken);
-        } else if (lock_state == HIGH && (last_task == PU || last_task == DU || last_task == DD || last_task == PD)) {
-            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
-            last_task = STOP;
         }
     }
     // — PORT C —
