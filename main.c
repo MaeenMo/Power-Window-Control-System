@@ -1,46 +1,15 @@
-#include "FreeRTOS.h"
-#include "task.h"
-#include "queue.h"
-#include "semphr.h"
-#include "timers.h"
-
-#include "Port_Config.h"
-
-#include "driverlib/interrupt.h"
-#include "driverlib/i2c.h"
-#include "driverlib/qei.h"
-
-#include "lcd_i2c.h"
-
+#include "Config.h"
+#include "Helper_Functions.h"
 
 /* Global Variables */
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "EndlessLoop"
-#define WINDOW_OPEN  		        HIGH // Saving the state of the open window as 1
-#define WINDOW_CLOSED  	            LOW // Saving the state of the closed window as 0
-#define UP							HIGH // Saving the UP Direction of window as 1
-#define DOWN						LOW // Saving the DOWN Direction of window as 0
-#define MIDDLE					    2
-#define STOP						0
-#define PU							1
-#define PD							2
-#define DU							3
-#define DD							4
-#define ON                          LOW
-#define OFF                         HIGH
 
-
-bool driver_elevate_button_state; // variable for handling the state of the elevator button from the driver side
-bool driver_lower_button_state;	// variable for handling the state of the lowering button from the driver side
 bool passenger_elevate_button_state; // variable for handling the state of the elevator button from the Passenger side
 bool passenger_lower_button_state; // variable for handling the state of the Lowering button from the Passenger side
 bool lock_state; // variable for handling the state of the lock switch
-bool upper_limit_switch_state; // variable for handling the state of the upper limit switch
-bool lower_limit_switch_state; // variable for handling the state of the lower limit switch
-int	 window_state = MIDDLE;	// variable for handling the state of the window state
-bool operation;	// variable for handling the return from the manual control
-int last_task = STOP;
-volatile bool debounce_in_progress = false;
+
+volatile bool debounce_in_progress = false; // variable for handling the debounce state
 
 // Encoder globals
 //static volatile uint32_t TOTAL_PULSES = 500UL;   // pulses from top→bottom
@@ -64,11 +33,12 @@ static const uint8_t unlockChar[8] = {
 
 static QueueHandle_t xStatusQueue;
 
-/* Handlers, Semaphores, Mutexes */
+/* Handlers, Semaphores */
 TaskHandle_t xDriverWindowElevateTaskHandle = NULL, xDriverWindowLowerTaskHandle = NULL;	// handler of the vDriverWindowElevateTask and vDriverWindowLowerTask
 TaskHandle_t xPassengerWindowElevateTaskHandle = NULL, xPassengerWindowLowerTaskHandle = NULL; // handler of the vPassengerWindowElevateTask and vPassengerWindowLowerTask
 TaskHandle_t xLockWindowsTaskHandle = NULL; // handler of the vLockWindowsTask
 TaskHandle_t xUpperLimitTaskHandle = NULL, xLowerLimitTaskHandle = NULL; // handler of the vUpperLimitTask
+TaskHandle_t xObstacleDetectionHandle = NULL; // handler of the vObstacleDetection
 
 TimerHandle_t xDebounceTimer;
 
@@ -77,34 +47,7 @@ SemaphoreHandle_t xDriverUpSem = NULL, xDriverDownSem = NULL;
 SemaphoreHandle_t xPassengerUpSem = NULL, xPassengerDownSem = NULL;
 SemaphoreHandle_t xLockWindowsSem = NULL;
 SemaphoreHandle_t xUpperLimitSem = NULL, xLowerLimitSem = NULL;
-
-
-
-void vDriverWindowElevateTask(void *pvParameters); // RTOS task for controlling (elevating) a passenger window from the driver side
-
-void vDriverWindowLowerTask(void *pvParameters); // RTOS task for controlling (lowering) a passenger window from the driver side
-
-void vPassengerWindowElevateTask(void *pvParameters); // RTOS task for controlling (elevating) a passenger window from the passenger side
-
-void vPassengerWindowLowerTask(void *pvParameters); // RTOS task for controlling (lowering) a passenger window from the passenger side
-
-void vLockWindowsTask(void *pvParameters); // RTOS task for locking/unlocking the control from the passenger side
-
-void vUpperLimitTask(void *pvParameters); // RTOS task for reacting to reaching the upper limit
-
-void vLowerLimitTask(void *pvParameters); // RTOS task for reacting to reaching the lower limit
-
-//void vCalibrationTask(void *pv);
-
-//void vEncoderMonitorTask(void *pvParameters); // RTOS task for monitoring the encoder
-
-void vLCDTask(void *pvParameters); // RTOS task for updating the LCD display
-
-void vStatusProducerTask(void *pv); // RTOS task for producing status messages
-
-void ISRHandlers(void); // ISR handler for GPIO interrupts
-
-void vDebounceTimerCallback(TimerHandle_t xTimer);  // Callback function for the debounce timer
+SemaphoreHandle_t xObstacleDetectionSem = NULL;
 
 /*––– MAIN –––*/
 int main(void) {
@@ -120,15 +63,12 @@ int main(void) {
 
     // LCD
     I2CMasterInitExpClk(I2C0_BASE, SysCtlClockGet(), false);
-
     LCD_I2C_Init();
     LCD_I2C_CreateChar(0, lockChar);
     LCD_I2C_CreateChar(1, unlockChar);
 
     // --- create queue & tasks ---
     xStatusQueue = xQueueCreate(1, sizeof(StatusMsg_t));
-    xTaskCreate(vLCDTask,            "LCD",   128, NULL, 2, NULL);
-    xTaskCreate(vStatusProducerTask, "Stat",  128, NULL, 1, NULL);
 
 //    // 3) QEI0 on PB6/PB7
 //    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
@@ -166,30 +106,11 @@ int main(void) {
     xLockWindowsSem    = xSemaphoreCreateBinary();
     xUpperLimitSem     = xSemaphoreCreateBinary();
     xLowerLimitSem     = xSemaphoreCreateBinary();
+    xObstacleDetectionSem = xSemaphoreCreateBinary();
 
     // GPIO interrupts
     GPIOIntRegister(GPIO_PORTA_BASE, ISRHandlers);
     GPIOIntRegister(GPIO_PORTC_BASE, ISRHandlers);
-
-    GPIOIntTypeSet(GPIO_PORTA_BASE, Driver_Elevate_Button, GPIO_RISING_EDGE);
-    GPIOIntTypeSet(GPIO_PORTA_BASE, Driver_Lower_Button, GPIO_RISING_EDGE);
-    GPIOIntTypeSet(GPIO_PORTA_BASE, Passenger_Elevate_Button, GPIO_RISING_EDGE);
-    GPIOIntTypeSet(GPIO_PORTA_BASE, Passenger_Lower_Button, GPIO_RISING_EDGE);
-
-    GPIOIntTypeSet(GPIO_PORTC_BASE, Window_Lock_Switch, GPIO_BOTH_EDGES);
-    GPIOIntTypeSet(GPIO_PORTC_BASE, Window_Upper_Limit, GPIO_BOTH_EDGES);
-    GPIOIntTypeSet(GPIO_PORTC_BASE, Window_Lower_Limit, GPIO_BOTH_EDGES);
-
-    GPIOIntEnable(GPIO_PORTA_BASE,
-                  Driver_Elevate_Button | Driver_Lower_Button |
-                  Passenger_Elevate_Button | Passenger_Lower_Button);
-
-    GPIOIntEnable(GPIO_PORTC_BASE, Window_Lock_Switch | Window_Upper_Limit | Window_Lower_Limit);
-
-    IntEnable(INT_GPIOA_TM4C123);
-    IntPrioritySet(INT_GPIOA_TM4C123, configMAX_SYSCALL_INTERRUPT_PRIORITY+1);
-    IntEnable(INT_GPIOC_TM4C123);
-    IntPrioritySet(INT_GPIOC_TM4C123, configMAX_SYSCALL_INTERRUPT_PRIORITY);
 
     // Create single-touch driver‑up task
     xTaskCreate(vDriverWindowElevateTask, "DrvUp", 128, NULL, 3, &xDriverWindowElevateTaskHandle);
@@ -199,8 +120,9 @@ int main(void) {
     xTaskCreate(vLockWindowsTask, "LockCtrl", 128, NULL, 4, &xLockWindowsTaskHandle);
     xTaskCreate(vUpperLimitTask, "UpperLimit", 128, NULL, 5, &xUpperLimitTaskHandle);
     xTaskCreate(vLowerLimitTask, "LowerLimit", 128, NULL, 5, &xLowerLimitTaskHandle);
-//    xTaskCreate(vEncoderMonitorTask, "EncMon", 128, NULL, 1, NULL);
-//    xTaskCreate(vCalibrationTask, "Calib", 128, NULL, 2, NULL);
+    xTaskCreate(vObstacleDetection, "ObstacleDet", 128, NULL, 6, &xObstacleDetectionHandle);
+    xTaskCreate(vLCDTask,            "LCD",   128, NULL, 2, NULL);
+    xTaskCreate(vStatusProducerTask, "Stat",  128, NULL, 1, NULL);
 
     xDebounceTimer = xTimerCreate(
             "DebounceTimer",                // Timer name
@@ -279,7 +201,7 @@ void vStatusProducerTask(void *pv) {
 
 /*––– DRIVER ELEVATE TASK –––*/
 void vDriverWindowElevateTask(void *pvParameters) {
-    // taking semaphore at the beginning for blocking the task
+    // Taking semaphore at the beginning for blocking the task
     xSemaphoreTake(xDriverUpSem, 0);
     while (1) {
         // Block until ISR gives us the semaphore
@@ -287,45 +209,35 @@ void vDriverWindowElevateTask(void *pvParameters) {
 
         // Debounce
         vTaskDelay(pdMS_TO_TICKS(200));
-        driver_elevate_button_state = GPIOPinRead(Buttons_Motor_Port, Driver_Elevate_Button);
+        bool driver_elevate_button_state = GPIOPinRead(Buttons_Motor_Port, Driver_Elevate_Button);
 
         if (driver_elevate_button_state == HIGH && window_state != WINDOW_CLOSED) {
             // === MANUAL MODE ===
             // While held, move up
             while (driver_elevate_button_state == HIGH && window_state != WINDOW_CLOSED) {
-                GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, DC_Motor_In1);
-                operation = UP;
-                window_state = MIDDLE;
+                closeWindow(DRIVER_WINDOW);
                 driver_elevate_button_state = GPIOPinRead(Buttons_Motor_Port, Driver_Elevate_Button);
-                last_task = DU;
                 vTaskDelay(pdMS_TO_TICKS(10));
             }
-            // Stop
-            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
-            last_task = STOP;
         }
         else if (driver_elevate_button_state == LOW && window_state != WINDOW_CLOSED) {
             // === ONE‑TOUCH AUTO MODE ===
             // Start motor up
-            uint8_t state = false;
+            state = false;
             while (!state && window_state != WINDOW_CLOSED) {
-                GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, DC_Motor_In1);
-                operation = UP;
-                window_state = MIDDLE;
-                last_task = DU;
+                closeWindow(DRIVER_WINDOW);
                 state = GPIOPinRead(Buttons_Motor_Port, Driver_Elevate_Button | Driver_Lower_Button | Passenger_Elevate_Button | Passenger_Lower_Button);
                 vTaskDelay(pdMS_TO_TICKS(10));
             }
-            // Stop
-            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
-            last_task = STOP;
         }
+        // Stop
+        stopWindow();
     }
 }
 
 /*––– DRIVER LOWER TASK –––*/
 void vDriverWindowLowerTask(void *pvParameters) {
-    // taking semaphore at the beginning for blocking the task
+    // Taking semaphore at the beginning for blocking the task
     xSemaphoreTake(xDriverDownSem, 0);
     while (1) {
         // Block until ISR gives us the semaphore
@@ -333,45 +245,35 @@ void vDriverWindowLowerTask(void *pvParameters) {
 
         // Debounce
         vTaskDelay(pdMS_TO_TICKS(200));
-        driver_lower_button_state = GPIOPinRead(Buttons_Motor_Port, Driver_Lower_Button);
+        bool driver_lower_button_state = GPIOPinRead(Buttons_Motor_Port, Driver_Lower_Button);
 
         if (driver_lower_button_state == HIGH && window_state != WINDOW_OPEN) {
             // === MANUAL MODE ===
             // While held, move down
             while (driver_lower_button_state == HIGH && window_state != WINDOW_OPEN) {
-                GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, DC_Motor_In2);
-                operation = DOWN;
-                window_state = MIDDLE;
+                openWindow(DRIVER_WINDOW);
                 driver_lower_button_state = GPIOPinRead(Buttons_Motor_Port, Driver_Lower_Button);
-                last_task = DD;
                 vTaskDelay(pdMS_TO_TICKS(10));
             }
-            // Stop
-            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
-            last_task = STOP;
         }
         else if (driver_lower_button_state == LOW && window_state != WINDOW_OPEN) {
             // === ONE‑TOUCH AUTO MODE ===
             // Start motor down
-            uint8_t state = false;
+            state = false;
             while (!state && window_state != WINDOW_OPEN) {
-                GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, DC_Motor_In2);
-                operation = DOWN;
-                window_state = MIDDLE;
-                last_task = DD;
+                openWindow(DRIVER_WINDOW);
                 state = GPIOPinRead(Buttons_Motor_Port, Driver_Elevate_Button | Driver_Lower_Button | Passenger_Elevate_Button | Passenger_Lower_Button);
                 vTaskDelay(pdMS_TO_TICKS(10));
             }
-            // Stop
-            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
-            last_task = STOP;
         }
+        // Stop
+        stopWindow();
     }
 }
 
 /*––– PASSENGER ELEVATE TASK –––*/
 void vPassengerWindowElevateTask(void *pvParameters) {
-    // taking semaphore at the beginning for blocking the task
+    // Taking semaphore at the beginning for blocking the task
     xSemaphoreTake(xPassengerUpSem, 0);
     while (1) {
         // Block until ISR gives us the semaphore
@@ -379,45 +281,35 @@ void vPassengerWindowElevateTask(void *pvParameters) {
 
         // Debounce
         vTaskDelay(pdMS_TO_TICKS(200));
-        passenger_elevate_button_state = GPIOPinRead(Buttons_Motor_Port, Passenger_Elevate_Button);
+        bool passenger_elevate_button_state = GPIOPinRead(Buttons_Motor_Port, Passenger_Elevate_Button);
 
         if (passenger_elevate_button_state == HIGH && window_state != WINDOW_CLOSED) {
             // === MANUAL MODE ===
             // While held, move up
             while (passenger_elevate_button_state == HIGH && window_state != WINDOW_CLOSED) {
-                GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, DC_Motor_In1);
-                last_task = PU;
-                operation = UP;
-                window_state = MIDDLE;
+                closeWindow(PASSENGER_WINDOW);
                 passenger_elevate_button_state = GPIOPinRead(Buttons_Motor_Port, Passenger_Elevate_Button);
                 vTaskDelay(pdMS_TO_TICKS(10));
             }
-            // Stop
-            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
-            last_task = STOP;
         }
         else if (passenger_elevate_button_state == LOW && window_state != WINDOW_CLOSED) {
             // === ONE‑TOUCH AUTO MODE ===
             // Start motor up
-            uint8_t state = false;
+            state = false;
             while (!state && window_state != WINDOW_CLOSED) {
-                GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, DC_Motor_In1);
-                operation = UP;
-                last_task = PU;
-                window_state = MIDDLE;
+                closeWindow(PASSENGER_WINDOW);
                 state = GPIOPinRead(Buttons_Motor_Port, Driver_Elevate_Button | Driver_Lower_Button | Passenger_Elevate_Button | Passenger_Lower_Button) && lock_state;
                 vTaskDelay(pdMS_TO_TICKS(10));
             }
-            // Stop
-            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
-            last_task = STOP;
         }
+       // Stop
+       stopWindow();
     }
 }
 
 /*––– PASSENGER LOWER TASK –––*/
 void vPassengerWindowLowerTask(void *pvParameters) {
-    // taking semaphore at the beginning for blocking the task
+    // Taking semaphore at the beginning for blocking the task
     xSemaphoreTake(xPassengerDownSem, 0);
     while (1) {
         // Block until ISR gives us the semaphore
@@ -425,44 +317,34 @@ void vPassengerWindowLowerTask(void *pvParameters) {
 
         // Debounce
         vTaskDelay(pdMS_TO_TICKS(200));
-        passenger_lower_button_state = GPIOPinRead(Buttons_Motor_Port, Passenger_Lower_Button);
+        bool passenger_lower_button_state = GPIOPinRead(Buttons_Motor_Port, Passenger_Lower_Button);
 
         if (passenger_lower_button_state == HIGH && window_state != WINDOW_OPEN) {
             // === MANUAL MODE ===
             // While held, move down
             while (passenger_lower_button_state == HIGH && window_state != WINDOW_OPEN) {
-                GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, DC_Motor_In2);
-                operation = DOWN;
-                last_task = PD;
-                window_state = MIDDLE;
+                openWindow(PASSENGER_WINDOW);
                 passenger_lower_button_state = GPIOPinRead(Buttons_Motor_Port, Passenger_Lower_Button);
                 vTaskDelay(pdMS_TO_TICKS(10));
             }
-            // Stop
-            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
-            last_task = STOP;
         }
         else if (passenger_lower_button_state == LOW && window_state != WINDOW_OPEN) {
             // === ONE‑TOUCH AUTO MODE ===
             // Start motor down
-            uint8_t state = false;
+            state = false;
             while (!state && window_state != WINDOW_OPEN) {
-                GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, DC_Motor_In2);
-                operation = DOWN;
-                last_task = PD;
-                window_state = MIDDLE;
+                openWindow(PASSENGER_WINDOW);
                 state = GPIOPinRead(Buttons_Motor_Port, Driver_Elevate_Button | Driver_Lower_Button | Passenger_Elevate_Button | Passenger_Lower_Button) && lock_state;
                 vTaskDelay(pdMS_TO_TICKS(10));
             }
-            // Stop
-            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
-            last_task = STOP;
         }
+        // Stop
+        stopWindow();
     }
 }
 
 void vLockWindowsTask(void *pvParameters) {
-    // taking semaphore at the beginning for blocking the task
+    // Taking semaphore at the beginning for blocking the task
     xSemaphoreTake(xLockWindowsSem, 0);
     while (1) {
         // Block until ISR gives us the semaphore
@@ -472,8 +354,7 @@ void vLockWindowsTask(void *pvParameters) {
 
         if (lock_state == LOW) {
             if(passenger_elevate_button_state || passenger_lower_button_state){
-                GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
-                last_task = STOP;
+                stopWindow();
             }
 
             // Disabling passenger control
@@ -489,7 +370,7 @@ void vLockWindowsTask(void *pvParameters) {
 }
 
 void vUpperLimitTask(void *pvParameters) {
-    // taking semaphore at the beginning for blocking the task
+    // Taking semaphore at the beginning for blocking the task
     xSemaphoreTake(xUpperLimitSem, 0);
     while (1) {
         // Block until ISR gives us the semaphore
@@ -497,13 +378,12 @@ void vUpperLimitTask(void *pvParameters) {
 
         // Debounce
 //        vTaskDelay(pdMS_TO_TICKS(10));
-        upper_limit_switch_state = GPIOPinRead(Sensors_Port, Window_Upper_Limit);
+        bool upper_limit_switch_state = GPIOPinRead(Sensors_Port, Window_Upper_Limit);
 
         // Stopping the motor at upper limit
         if (upper_limit_switch_state == HIGH && operation == UP) {
             // stop motor…
-            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1|DC_Motor_In2, 0);
-            last_task = STOP;
+            stopWindow();
             window_state = WINDOW_CLOSED;
             vTaskSuspend(xDriverWindowElevateTaskHandle);
             vTaskSuspend(xPassengerWindowElevateTaskHandle);
@@ -519,7 +399,7 @@ void vUpperLimitTask(void *pvParameters) {
 }
 
 void vLowerLimitTask(void *pvParameters) {
-    // taking semaphore at the beginning for blocking the task
+    // Taking semaphore at the beginning for blocking the task
     xSemaphoreTake(xLowerLimitSem, 0);
     while (1) {
         // Block until ISR gives us the semaphore
@@ -527,12 +407,11 @@ void vLowerLimitTask(void *pvParameters) {
 
         // Debounce
 //        vTaskDelay(pdMS_TO_TICKS(10));
-        lower_limit_switch_state = GPIOPinRead(Sensors_Port, Window_Lower_Limit);
+        bool lower_limit_switch_state = GPIOPinRead(Sensors_Port, Window_Lower_Limit);
 
         // Stopping the motor at lower limit
         if (lower_limit_switch_state == HIGH && operation == DOWN) {
-            GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1 | DC_Motor_In2, 0);
-            last_task = STOP;
+            stopWindow();
             window_state = WINDOW_OPEN;
             vTaskSuspend(xDriverWindowLowerTaskHandle);
             vTaskSuspend(xPassengerWindowLowerTaskHandle);
@@ -544,6 +423,29 @@ void vLowerLimitTask(void *pvParameters) {
             // Re-allow window opening option
             vTaskResume(xDriverWindowLowerTaskHandle);
             vTaskResume(xPassengerWindowLowerTaskHandle);
+        }
+    }
+}
+
+void vObstacleDetection(void *pvParameters) {
+    // Taking semaphore at the beginning for blocking the task
+    xSemaphoreTake(xObstacleDetectionSem, 0);
+    while (1) {
+        xSemaphoreTake(xObstacleDetectionSem, portMAX_DELAY);
+        vTaskDelay(pdMS_TO_TICKS(200));
+
+        bool object_detection_switch_state = GPIOPinRead(Sensors_Port,Object_Detection_Sensor);
+        // Process the IR sensor state
+
+        if ( object_detection_switch_state == LOW && operation == UP) {  // Function to check if an obstacle is detected
+            state = true;
+            openWindow(DRIVER_WINDOW);
+            vTaskSuspend(xDriverWindowElevateTaskHandle);
+            vTaskSuspend(xPassengerWindowElevateTaskHandle);
+            vTaskDelay(pdMS_TO_TICKS(500));
+            stopWindow();
+            vTaskResume(xDriverWindowElevateTaskHandle);
+            vTaskResume(xPassengerWindowElevateTaskHandle);
         }
     }
 }
@@ -649,6 +551,10 @@ void ISRHandlers(void) {
     else if (c & Window_Lower_Limit) {
         GPIOIntClear(GPIO_PORTC_BASE, Window_Lower_Limit);
         xSemaphoreGiveFromISR(xLowerLimitSem, &xHigherPriorityTaskWoken);
+    }
+    else if (c & Object_Detection_Sensor) {
+        GPIOIntClear(GPIO_PORTC_BASE, Object_Detection_Sensor);
+        xSemaphoreGiveFromISR(xObstacleDetectionSem, &xHigherPriorityTaskWoken);
     }
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }

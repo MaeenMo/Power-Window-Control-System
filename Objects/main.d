@@ -1,7 +1,9 @@
-./objects/main.o: main.c \
+./objects/main.o: main.c ..\Power-Window-Control-System\Config.h \
+  D:\Programs\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdint.h \
+  D:\Programs\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdbool.h \
+  D:\Programs\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdio.h \
   C:\Users\maeen\AppData\Local\Arm\Packs\ARM\CMSIS-FreeRTOS\11.1.0\Source\include\FreeRTOS.h \
   D:\Programs\Keil_v5\ARM\ARMCLANG\Bin\..\include\stddef.h \
-  D:\Programs\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdint.h \
   RTE\RTOS\FreeRTOSConfig.h RTE\_Target_1\RTE_Components.h \
   C:\Users\maeen\AppData\Local\Arm\Packs\Keil\TM4C_DFP\1.1.0\Device\Include\TM4C123\TM4C123.h \
   C:\Users\maeen\AppData\Local\Arm\Packs\Keil\TM4C_DFP\1.1.0\Device\Include\TM4C123\TM4C123GH6PM.h \
@@ -25,9 +27,6 @@
   C:\Users\maeen\AppData\Local\Arm\Packs\ARM\CMSIS-FreeRTOS\11.1.0\Source\include\queue.h \
   C:\Users\maeen\AppData\Local\Arm\Packs\ARM\CMSIS-FreeRTOS\11.1.0\Source\include\semphr.h \
   C:\Users\maeen\AppData\Local\Arm\Packs\ARM\CMSIS-FreeRTOS\11.1.0\Source\include\timers.h \
-  ..\Power-Window-Control-System\Port_Config.h \
-  D:\Programs\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdbool.h \
-  D:\Programs\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdio.h \
   ..\Power-Window-Control-System\inc\hw_memmap.h \
   ..\Power-Window-Control-System\inc\hw_types.h \
   ..\Power-Window-Control-System\inc\hw_ints.h \
@@ -37,4 +36,5 @@
   ..\Power-Window-Control-System\driverlib\interrupt.h \
   ..\Power-Window-Control-System\driverlib\i2c.h \
   ..\Power-Window-Control-System\driverlib\qei.h \
-  ..\Power-Window-Control-System\lcd_i2c.h
+  ..\Power-Window-Control-System\lcd_i2c.h \
+  ..\Power-Window-Control-System\Helper_Functions.h

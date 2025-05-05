@@ -1,4 +1,4 @@
-./objects/port_config.o: Port_Config.c \
+./objects/helper_functions.o: Helper_Functions.c \
   ..\Power-Window-Control-System\Config.h \
   D:\Programs\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdint.h \
   D:\Programs\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdbool.h \
@@ -37,4 +37,5 @@
   ..\Power-Window-Control-System\driverlib\interrupt.h \
   ..\Power-Window-Control-System\driverlib\i2c.h \
   ..\Power-Window-Control-System\driverlib\qei.h \
-  ..\Power-Window-Control-System\lcd_i2c.h
+  ..\Power-Window-Control-System\lcd_i2c.h \
+  ..\Power-Window-Control-System\Helper_Functions.h

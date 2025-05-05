@@ -1,8 +1,4 @@
-#include "Port_Config.h"
-#include "driverlib/sysctl.h"
-#include "driverlib/gpio.h"
-#include "driverlib/pin_map.h"
-#include "driverlib/i2c.h"
+#include "Config.h"
 
 void PortA_Config(void) {
     // Enable the clock of PORTA
@@ -12,6 +8,16 @@ void PortA_Config(void) {
     // Configure PA6 & PA7 as outputs and PA2..5 as inputs
     GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE, GPIO_PIN_6 | GPIO_PIN_7);
     GPIOPinTypeGPIOInput(GPIO_PORTA_BASE, GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5);
+    GPIOIntTypeSet(GPIO_PORTA_BASE,
+                   Driver_Elevate_Button | Driver_Lower_Button |
+                   Passenger_Elevate_Button | Passenger_Lower_Button
+                   , GPIO_RISING_EDGE);
+    GPIOIntEnable(GPIO_PORTA_BASE,
+                  Driver_Elevate_Button | Driver_Lower_Button |
+                  Passenger_Elevate_Button | Passenger_Lower_Button);
+
+    IntEnable(INT_GPIOA_TM4C123);
+    IntPrioritySet(INT_GPIOA_TM4C123, configMAX_SYSCALL_INTERRUPT_PRIORITY+1);
 }
 
 void PortB_Config(void)
@@ -43,4 +49,14 @@ void PortC_Config(void) {
 
     // Configure pins PC4, PC5, PC6, and PC7 as inputs
     GPIOPinTypeGPIOInput(GPIO_PORTC_BASE, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7);
+
+    GPIOIntTypeSet(GPIO_PORTC_BASE,
+                   Window_Lock_Switch | Window_Upper_Limit |
+                   Window_Lower_Limit | Object_Detection_Sensor
+                   , GPIO_BOTH_EDGES);
+
+    GPIOIntEnable(GPIO_PORTC_BASE, Window_Lock_Switch | Window_Upper_Limit | Window_Lower_Limit | Object_Detection_Sensor);
+
+    IntEnable(INT_GPIOC_TM4C123);
+    IntPrioritySet(INT_GPIOC_TM4C123, configMAX_SYSCALL_INTERRUPT_PRIORITY);
 }

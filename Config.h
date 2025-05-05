@@ -5,6 +5,12 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
+#include "semphr.h"
+#include "timers.h"
+
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
 #include "inc/hw_ints.h"
@@ -12,6 +18,11 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/gpio.h"
 #include "driverlib/pin_map.h"
+#include "driverlib/interrupt.h"
+#include "driverlib/i2c.h"
+#include "driverlib/qei.h"
+
+#include "lcd_i2c.h"
 
 #include "TM4C123GH6PM.h"
 #define SYSCTL_RCGCGPIO_R       (*((volatile unsigned long *)0x400FE608))
@@ -127,13 +138,6 @@
 #define GPIO_PORTF_DMACTL_R     (*((volatile unsigned long *)0x40025534))
 	
 /* Pins Definition */
-
-#define Leds_Port											GPIO_PORTF_BASE
-#define RedLed   											(1<<1)
-#define BlueLed  											(1<<2)
-#define GreenLed 											(1<<3)
-
-
 #define Buttons_Motor_Port						GPIO_PORTA_BASE
 #define PA0														(1<<0)
 #define PA1														(1<<1)
@@ -146,10 +150,6 @@
 
 
 #define Sensors_Port									GPIO_PORTC_BASE
-#define PC0														(1<<0)
-#define PC1														(1<<1)
-#define PC2														(1<<2)
-#define PC3														(1<<3)
 #define Object_Detection_Sensor				(1<<4)
 #define Window_Upper_Limit						(1<<5)
 #define Window_Lower_Limit						(1<<6)
@@ -158,12 +158,55 @@
 #define GPIO_PB2_I2C0SCL        0x00010803
 #define GPIO_PB3_I2C0SDA        0x00010C03
 
+#define WINDOW_OPEN  		        HIGH // Saving the state of the open window as 1
+#define WINDOW_CLOSED  	            LOW // Saving the state of the closed window as 0
+#define UP							HIGH // Saving the UP Direction of window as 1
+#define DOWN						LOW // Saving the DOWN Direction of window as 0
+#define MIDDLE					    2
+#define STOP						0
+#define PU							1
+#define PD							2
+#define DU							3
+#define DD							4
 #define LOW															0
 #define HIGH														1
+
+#define DRIVER_WINDOW 0
+#define PASSENGER_WINDOW 1
+
 
 void PortA_Config(void);
 void PortB_Config(void);
 void PortC_Config(void);
+
+
+void vDriverWindowElevateTask(void *pvParameters); // RTOS task for controlling (elevating) a passenger window from the driver side
+
+void vDriverWindowLowerTask(void *pvParameters); // RTOS task for controlling (lowering) a passenger window from the driver side
+
+void vPassengerWindowElevateTask(void *pvParameters); // RTOS task for controlling (elevating) a passenger window from the passenger side
+
+void vPassengerWindowLowerTask(void *pvParameters); // RTOS task for controlling (lowering) a passenger window from the passenger side
+
+void vLockWindowsTask(void *pvParameters); // RTOS task for locking/unlocking the control from the passenger side
+
+void vUpperLimitTask(void *pvParameters); // RTOS task for reacting to reaching the upper limit
+
+void vLowerLimitTask(void *pvParameters); // RTOS task for reacting to reaching the lower limit
+
+void vObstacleDetection(void *pvParameters); // RTOS task for detecting obstacles in the path of the window during automatic closing
+
+//void vCalibrationTask(void *pv);
+
+//void vEncoderMonitorTask(void *pvParameters); // RTOS task for monitoring the encoder
+
+void vLCDTask(void *pvParameters); // RTOS task for updating the LCD display
+
+void vStatusProducerTask(void *pv); // RTOS task for producing status messages
+
+void ISRHandlers(void); // ISR handler for GPIO interrupts
+
+void vDebounceTimerCallback(TimerHandle_t xTimer);  // Callback function for the debounce timer
 
 
 #endif

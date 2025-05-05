@@ -1,7 +1,8 @@
 --cpu=Cortex-M4.fp.sp
 ".\objects\main.o"
-".\objects\port_config.o"
 ".\objects\lcd_i2c.o"
+".\objects\port_config.o"
+".\objects\helper_functions.o"
 ".\driverlib\rvmdk\driverlib.lib"
 ".\objects\clib_os.o"
 ".\objects\cmsis_os2.o"
