@@ -108,39 +108,9 @@
 #define GPIO_PORTC_PCTL_R       (*((volatile uint32_t *)0x4000652C))
 #define GPIO_PORTC_ADCCTL_R     (*((volatile uint32_t *)0x40006530))
 #define GPIO_PORTC_DMACTL_R     (*((volatile uint32_t *)0x40006534))
-
-
-/* PORTF Registers */
-#define GPIO_PORTF_DATA_BITS_R  ((volatile unsigned long *)0x40025000)
-#define GPIO_PORTF_DATA_R       (*((volatile unsigned long *)0x400253FC))
-#define GPIO_PORTF_DIR_R        (*((volatile unsigned long *)0x40025400))
-#define GPIO_PORTF_IS_R         (*((volatile unsigned long *)0x40025404))
-#define GPIO_PORTF_IBE_R        (*((volatile unsigned long *)0x40025408))
-#define GPIO_PORTF_IEV_R        (*((volatile unsigned long *)0x4002540C))
-#define GPIO_PORTF_IM_R         (*((volatile unsigned long *)0x40025410))
-#define GPIO_PORTF_RIS_R        (*((volatile unsigned long *)0x40025414))
-#define GPIO_PORTF_MIS_R        (*((volatile unsigned long *)0x40025418))
-#define GPIO_PORTF_ICR_R        (*((volatile unsigned long *)0x4002541C))
-#define GPIO_PORTF_AFSEL_R      (*((volatile unsigned long *)0x40025420))
-#define GPIO_PORTF_DR2R_R       (*((volatile unsigned long *)0x40025500))
-#define GPIO_PORTF_DR4R_R       (*((volatile unsigned long *)0x40025504))
-#define GPIO_PORTF_DR8R_R       (*((volatile unsigned long *)0x40025508))
-#define GPIO_PORTF_ODR_R        (*((volatile unsigned long *)0x4002550C))
-#define GPIO_PORTF_PUR_R        (*((volatile unsigned long *)0x40025510))
-#define GPIO_PORTF_PDR_R        (*((volatile unsigned long *)0x40025514))
-#define GPIO_PORTF_SLR_R        (*((volatile unsigned long *)0x40025518))
-#define GPIO_PORTF_DEN_R        (*((volatile unsigned long *)0x4002551C))
-#define GPIO_PORTF_LOCK_R       (*((volatile unsigned long *)0x40025520))
-#define GPIO_PORTF_CR_R         (*((volatile unsigned long *)0x40025524))
-#define GPIO_PORTF_AMSEL_R      (*((volatile unsigned long *)0x40025528))
-#define GPIO_PORTF_PCTL_R       (*((volatile unsigned long *)0x4002552C))
-#define GPIO_PORTF_ADCCTL_R     (*((volatile unsigned long *)0x40025530))
-#define GPIO_PORTF_DMACTL_R     (*((volatile unsigned long *)0x40025534))
 	
 /* Pins Definition */
 #define Buttons_Motor_Port						GPIO_PORTA_BASE
-#define PA0														(1<<0)
-#define PA1														(1<<1)
 #define Passenger_Elevate_Button			(1<<2)
 #define Passenger_Lower_Button			 	(1<<3)
 #define Driver_Elevate_Button					(1<<4)
@@ -178,7 +148,7 @@
 void PortA_Config(void);
 void PortB_Config(void);
 void PortC_Config(void);
-
+void PortD_Config_QEI(void);
 
 void vDriverWindowElevateTask(void *pvParameters); // RTOS task for controlling (elevating) a passenger window from the driver side
 
@@ -196,17 +166,16 @@ void vLowerLimitTask(void *pvParameters); // RTOS task for reacting to reaching 
 
 void vObstacleDetection(void *pvParameters); // RTOS task for detecting obstacles in the path of the window during automatic closing
 
-//void vCalibrationTask(void *pv);
-
-//void vEncoderMonitorTask(void *pvParameters); // RTOS task for monitoring the encoder
-
 void vLCDTask(void *pvParameters); // RTOS task for updating the LCD display
 
 void vStatusProducerTask(void *pv); // RTOS task for producing status messages
 
+void vEncoderMonitorTask(void *pvParameters); // RTOS task for monitoring the encoder
+
+void vCalibrationTask(void *pvParameters); // RTOS task for calibrating the system
+
 void ISRHandlers(void); // ISR handler for GPIO interrupts
 
 void vDebounceTimerCallback(TimerHandle_t xTimer);  // Callback function for the debounce timer
-
 
 #endif

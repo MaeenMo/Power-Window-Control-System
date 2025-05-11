@@ -156,9 +156,9 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>472</LineNumber>
+          <LineNumber>437</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>16036</Address>
+          <Address>15654</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -167,7 +167,7 @@
           <BreakIfRCount>1</BreakIfRCount>
           <Filename>.\main.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\power_window_control_system\main.c\472</Expression>
+          <Expression>\\power_window_control_system\main.c\437</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -214,7 +214,12 @@
         <Ww>
           <count>8</count>
           <WinNumber>1</WinNumber>
-          <ItemText>GPIO_PORTA_BASE</ItemText>
+          <ItemText>xObstacleDetectionSem</ItemText>
+        </Ww>
+        <Ww>
+          <count>9</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>good</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>
@@ -377,7 +382,7 @@
 
   <Group>
     <GroupName>::RTOS</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>1</RteFlg>

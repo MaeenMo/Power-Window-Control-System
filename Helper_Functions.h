@@ -4,7 +4,8 @@
 extern int last_task; // variable for handling the last task performed
 extern int window_state; // variable for handling the state of the window state
 extern bool operation; // variable for handling the return from the manual control
-extern uint8_t state; // variable for handling the state of auto mode
+extern bool autoMode; // variable for handling the state of auto mode
+extern bool objDet; // variable for handling the state of object detection
 
 void stopWindow(void);
 

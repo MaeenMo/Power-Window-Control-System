@@ -4,7 +4,8 @@
 int last_task = STOP;
 int window_state = MIDDLE;
 bool operation;
-uint8_t state = false;
+bool autoMode;
+bool objDet;
 
 void stopWindow(void) {
     GPIOPinWrite(GPIO_PORTA_BASE, DC_Motor_In1 | DC_Motor_In2, 0);
