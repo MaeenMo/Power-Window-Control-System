@@ -5,7 +5,7 @@
 <h2>Tool Versions:</h2>
 IDE-Version: µVision V5.38.0.0
 Copyright (C) 2022 ARM Ltd and ARM Germany GmbH. All rights reserved.
-License Information: Maeen Mohamed Sayed, ASU-FOE, LIC=----
+License Information: Maeen Mohamed Sayed, ASU-FOE, LIC=NHYH9-4TQ2G-24ZSS-LNVKW-KHDEK-B28BZ
  
 Tool Versions:
 Toolchain:       MDK-ARM Professional  Version: 5.38.0.0
@@ -28,25 +28,25 @@ Project File Date:  05/11/2025
 *** Using Compiler 'V6.19', folder: 'D:\Programs\Keil_v5\ARM\ARMCLANG\Bin'
 Rebuild target 'Target 1'
 compiling lcd_i2c.c...
-compiling clib_os.c...
-compiling retarget_io.c...
-compiling os_systick.c...
-compiling main.c...
-compiling system_TM4C123.c...
-compiling Helper_Functions.c...
-compiling freertos_evr.c...
-compiling list.c...
 compiling Port_Config.c...
-compiling heap_4.c...
+compiling main.c...
+compiling clib_os.c...
+compiling Helper_Functions.c...
+compiling os_systick.c...
+compiling system_TM4C123.c...
 compiling port.c...
 compiling event_groups.c...
+compiling freertos_evr.c...
+compiling retarget_io.c...
+compiling list.c...
+compiling heap_4.c...
 compiling queue.c...
-assembling startup_TM4C123.s...
 compiling cmsis_os2.c...
+assembling startup_TM4C123.s...
 compiling timers.c...
 compiling tasks.c...
 linking...
-Program Size: Code=28584 RO-data=2680 RW-data=1644 ZI-data=11864  
+Program Size: Code=29536 RO-data=2680 RW-data=1644 ZI-data=11864  
 ".\Objects\power-window-control-system.axf" - 0 Error(s), 0 Warning(s).
 
 <h2>Software Packages used:</h2>
@@ -106,26 +106,26 @@ Package Vendor: Keil
       Include file:  CMSIS/RTOS2/FreeRTOS/Config/FreeRTOSConfig.h
 
    * Component: ARM.FreeRTOS::RTOS:Core:Cortex-M:11.1.0
-      Include file:  Source/include/queue.h
       Source file:   Source/tasks.c
       Include file:  Source/include/task.h
-      Source file:   Source/portable/GCC/ARM_CM4F/port.c
-      Include file:  Source/include/FreeRTOS.h
-      Source file:   Source/list.c
       Include file:  Source/include/semphr.h
+      Include file:  Source/include/FreeRTOS.h
+      Include file:  Source/include/queue.h
       Source file:   Source/queue.c
+      Source file:   Source/list.c
+      Source file:   Source/portable/GCC/ARM_CM4F/port.c
       Source file:   CMSIS/RTOS2/FreeRTOS/Source/freertos_evr.c
 
    * Component: ARM.FreeRTOS::RTOS:Event Groups:11.1.0
-      Include file:  Source/include/event_groups.h
       Source file:   Source/event_groups.c
+      Include file:  Source/include/event_groups.h
 
    * Component: ARM.FreeRTOS::RTOS:Heap:Heap_4:11.1.0
       Source file:   Source/portable/MemMang/heap_4.c
 
    * Component: ARM.FreeRTOS::RTOS:Timers:11.1.0
-      Source file:   Source/timers.c
       Include file:  Source/include/timers.h
+      Source file:   Source/timers.c
 
    * Component: ARM::CMSIS:CORE:6.1.0
 
@@ -133,8 +133,8 @@ Package Vendor: Keil
       Source file:   CMSIS/RTOS2/Source/os_systick.c
 
    * Component: ARM::CMSIS:RTOS2:FreeRTOS:Cortex-M:11.1.0
-      Source file:   CMSIS/RTOS2/FreeRTOS/Source/cmsis_os2.c
       Source file:   CMSIS/RTOS2/FreeRTOS/Source/clib_os.c
+      Source file:   CMSIS/RTOS2/FreeRTOS/Source/cmsis_os2.c
       Include file:  CMSIS/RTOS2/FreeRTOS/Include/freertos_mpool.h
 
    * Component: Keil.ARM Compiler::Compiler:I/O:STDIN:ITM:1.2.0
@@ -144,9 +144,9 @@ Package Vendor: Keil
       Source file:   Source/retarget_io.c
 
    * Component: Keil::Device:Startup:1.0.1
-      Include file:  Device/Include/TM4C123/TM4C123.h
       Source file:   Device/Source/system_TM4C123.c
       Source file:   Device/Source/ARM/startup_TM4C123.s
+      Include file:  Device/Include/TM4C123/TM4C123.h
 Build Time Elapsed:  00:00:01
 </pre>
 </body>

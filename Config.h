@@ -133,7 +133,7 @@
 #define UP							HIGH // Saving the UP Direction of window as 1
 #define DOWN						LOW // Saving the DOWN Direction of window as 0
 #define MIDDLE					    2
-#define STOP						0
+#define STOP						5
 #define PU							1
 #define PD							2
 #define DU							3
@@ -144,9 +144,15 @@
 #define DRIVER_WINDOW 0
 #define PASSENGER_WINDOW 1
 
+#define GPIO_PD6_PHA0         0x00031806    // PCTL value to map PB6→PHA0
+#define GPIO_PD7_PHB0         0x00031C06    // PCTL value to map PB7→PHB0
+#define GPIO_O_LOCK           0x520         // GPIO Lock
+#define GPIO_O_CR             0x524         // GPIO Commit
+#define GPIO_LOCK_KEY         0x4C4F434B    // GPIO lock key
+
 
 void PortA_Config(void);
-void PortB_Config(void);
+void PortB_Config_LCD(void);
 void PortC_Config(void);
 void PortD_Config_QEI(void);
 
@@ -172,7 +178,7 @@ void vStatusProducerTask(void *pv); // RTOS task for producing status messages
 
 void vEncoderMonitorTask(void *pvParameters); // RTOS task for monitoring the encoder
 
-void vCalibrationTask(void *pvParameters); // RTOS task for calibrating the system
+void trigger_limit_semaphore(SemaphoreHandle_t xLimitSem, bool* is_encoder_limit); // Function to trigger the semaphore for the limit switch
 
 void ISRHandlers(void); // ISR handler for GPIO interrupts
 

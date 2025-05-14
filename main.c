@@ -12,7 +12,7 @@ bool lock_state; // variable for handling the state of the lock switch
 volatile bool debounce_in_progress = false; // variable for handling the debounce state
 
 // Encoder globals
-static volatile uint32_t TOTAL_PULSES = 0xFFFFFFFF;   // pulses from top→bottom
+static volatile uint32_t TOTAL_PULSES = 250UL;   // pulses from top→bottom
 volatile uint32_t windowPct      = 0;        // 0–100%
 
 typedef struct {
@@ -57,7 +57,7 @@ int main(void) {
 
     // Init I/O
     PortA_Config();  // must set PA6, PA7 outputs; PA4..2 inputs w/ digital enable
-    PortB_Config();  // LCD sets PB2-SCL, PB3-SDA
+    PortB_Config_LCD();  // LCD sets PB2-SCL, PB3-SDA
     PortC_Config();  // limit switches, lock switch, IR sensor
     PortD_Config_QEI();  // QEI inputs (Encoder) PD6-CLK PD7-DT
 
@@ -349,7 +349,12 @@ void vUpperLimitTask(void *pvParameters) {
         // Block until ISR gives us the semaphore
         xSemaphoreTake(xUpperLimitSem, portMAX_DELAY);
 
-        bool upper_limit_switch_state = GPIOPinRead(Sensors_Port, Window_Upper_Limit);
+        bool upper_limit_switch_state;
+
+        if (encoder_limit){
+            upper_limit_switch_state = HIGH;
+            encoder_limit = false;
+        } else upper_limit_switch_state = GPIOPinRead(Sensors_Port, Window_Upper_Limit);
 
         // Stopping the motor at upper limit
         if (upper_limit_switch_state == HIGH && operation == UP) {
@@ -357,8 +362,9 @@ void vUpperLimitTask(void *pvParameters) {
             window_state = WINDOW_CLOSED;
             vTaskSuspend(xDriverWindowElevateTaskHandle);
             vTaskSuspend(xPassengerWindowElevateTaskHandle);
-
-            QEIPositionSet(QEI0_BASE, 0);
+            QEIPositionSet(QEI0_BASE, TOTAL_PULSES);
+            windowPct = 100;
+            prev_pos = TOTAL_PULSES;
         }
         else {
             // Re-allow window closing option
@@ -375,7 +381,12 @@ void vLowerLimitTask(void *pvParameters) {
         // Block until ISR gives us the semaphore
         xSemaphoreTake(xLowerLimitSem, portMAX_DELAY);
 
-        bool lower_limit_switch_state = GPIOPinRead(Sensors_Port, Window_Lower_Limit);
+        bool lower_limit_switch_state;
+        
+        if (encoder_limit){
+            lower_limit_switch_state = HIGH;
+            encoder_limit = false;
+        } else lower_limit_switch_state = GPIOPinRead(Sensors_Port, Window_Lower_Limit);
 
         // Stopping the motor at lower limit
         if (lower_limit_switch_state == HIGH && operation == DOWN) {
@@ -383,11 +394,9 @@ void vLowerLimitTask(void *pvParameters) {
             window_state = WINDOW_OPEN;
             vTaskSuspend(xDriverWindowLowerTaskHandle);
             vTaskSuspend(xPassengerWindowLowerTaskHandle);
-            // Capture total pulses and reset encoder
-//            TOTAL_PULSES = QEIPositionGet(QEI0_BASE); // Get current position
-            if (TOTAL_PULSES != 0xFFFFFFFF)
-                QEIPositionSet(QEI0_BASE, 0);
-            vTaskDelay(pdMS_TO_TICKS(10));
+            QEIPositionSet(QEI0_BASE, 0);
+            windowPct = 0;
+            prev_pos = 0;
         } else {
             // Re-allow window opening option
             vTaskResume(xDriverWindowLowerTaskHandle);
@@ -420,30 +429,70 @@ void vObstacleDetection(void *pvParameters) {
     }
 }
 
-//void vCalibrationTask(void *pv) {
-////    // Drive down until lower limit is hit
-//
-//    vTaskDelete(NULL);
-//}
-
 /*––– ENCODER MONITOR –––*/
 void vEncoderMonitorTask(void *pv) {
-    openWindow(DRIVER_WINDOW);
-    while(GPIOPinRead(Sensors_Port, Window_Lower_Limit) == LOW) {
-        vTaskDelay(pdMS_TO_TICKS(10));
-    }
-    TOTAL_PULSES = QEIPositionGet(QEI0_BASE); // Record total pulses
-    QEIPositionSet(QEI0_BASE, 0); // Reset encoder position
+    QEIPositionSet(QEI0_BASE, 0);
     while (1) {
-        uint32_t pos = QEIPositionGet(QEI0_BASE); // initially 0xFFFFFFFF/    at 100% pos = TOTAL_PULSES /      if pos <= TOTAL_PULSES then
-        if (pos > TOTAL_PULSES) {
-            windowPct = (uint32_t)(((float)(0xFFFFFFFF - pos) / (float)(0xFFFFFFFF - TOTAL_PULSES)) * 100.0f);
-            if (windowPct > 100) windowPct = 100; // Clamp to 100%
-        } else {
-            windowPct = (uint32_t)(((float)(pos) / (float)(0xFFFFFFFF - TOTAL_PULSES)) * 100.0f);
-        }// pos 0xFFFFFFFF = 100% open
+        int8_t dir = QEIDirectionGet(QEI0_BASE);  // +1 = CW, -1 = CCW
+
+        if (operation == UP && dir > 0) {
+            // Closing: percentage increases
+            pos = QEIPositionGet(QEI0_BASE);
+            if (pos > TOTAL_PULSES && pos < 300) {
+                QEIPositionSet(QEI0_BASE, TOTAL_PULSES - 1);
+                pos = QEIPositionGet(QEI0_BASE);
+            } else if (pos > 450) {
+                QEIPositionSet(QEI0_BASE, 1);
+                pos = QEIPositionGet(QEI0_BASE);
+            }
+            if (pos > prev_pos) {
+                windowPct = (pos * 100UL / TOTAL_PULSES);
+                prev_pos = pos;
+            } else QEIPositionSet(QEI0_BASE, prev_pos);
+            if (windowPct > 100) windowPct = 100;
+            if (windowPct == 100){
+                prev_pos = TOTAL_PULSES;
+                trigger_limit_semaphore(xUpperLimitSem, &encoder_limit);
+            }
+        } else if (operation == DOWN && dir < 0) {
+            // Opening: percentage decreases
+            pos = QEIPositionGet(QEI0_BASE);
+            if (pos > TOTAL_PULSES && pos < 300) {
+                QEIPositionSet(QEI0_BASE, TOTAL_PULSES - 1);
+                pos = QEIPositionGet(QEI0_BASE);
+            } else if (pos > 450) {
+                QEIPositionSet(QEI0_BASE, 1);
+                pos = QEIPositionGet(QEI0_BASE);
+            }
+            if (pos < prev_pos) {
+                windowPct = (pos * 100UL) / TOTAL_PULSES;
+                prev_pos = pos;
+            } else QEIPositionSet(QEI0_BASE, prev_pos);
+            if (windowPct < 0) windowPct = 0;
+            if (windowPct > 100) windowPct = 100;
+            if (windowPct == 0){
+                prev_pos = 0;
+                trigger_limit_semaphore(xLowerLimitSem, &encoder_limit);
+            }
+        } else if (operation == STOP){
+            QEIPositionSet(QEI0_BASE, pos); // Set the position to the last known value
+        }
         vTaskDelay(pdMS_TO_TICKS(100));
     }
+}
+
+void trigger_limit_semaphore(SemaphoreHandle_t xLimitSem, bool* encoder_limit) {
+    *encoder_limit = true;
+
+    // First trigger
+    xSemaphoreGive(xLimitSem);
+    taskYIELD();
+    vTaskDelay(pdMS_TO_TICKS(1));
+
+    // Second trigger
+    xSemaphoreGive(xLimitSem);
+    taskYIELD();
+    vTaskDelay(pdMS_TO_TICKS(1));
 }
 
 /* Idle Task for sleeping the processor */

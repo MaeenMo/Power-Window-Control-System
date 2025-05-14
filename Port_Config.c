@@ -1,8 +1,5 @@
 #include "Config.h"
 
-#define GPIO_PD6_PHA0           0x00031806  // PCTL value to map PB6→PHA0
-#define GPIO_PD7_PHB0           0x00031C06  // PCTL value to map PB7→PHB0
-
 void PortA_Config(void) {
     // Enable the clock of PORTA
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
@@ -25,7 +22,7 @@ void PortA_Config(void) {
     GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_6 | GPIO_PIN_7, 0);
 }
 
-void PortB_Config(void)
+void PortB_Config_LCD(void)
 {
     // Enable GPIOB and I2C0 peripherals
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
@@ -74,8 +71,10 @@ void PortD_Config_QEI(void)
     SysCtlPeripheralEnable(SYSCTL_PERIPH_QEI0);
     while(!SysCtlPeripheralReady(SYSCTL_PERIPH_QEI0)) {}
 
-//    GPIO_PORTB_PCTL_R = (GPIO_PORTD_PCTL_R & ~(0xFF << 24)) // Clear bits
-//                        | (0x55 << 24);  // Set both PB6 and PB7 to function 5
+    // Unlock PD7
+    HWREG(GPIO_PORTD_BASE + GPIO_O_LOCK) = GPIO_LOCK_KEY;
+    HWREG(GPIO_PORTD_BASE + GPIO_O_CR) |= GPIO_PIN_7;
+    HWREG(GPIO_PORTD_BASE + GPIO_O_LOCK) = 0;
 
     // Mux PD6→PHA0 and PD7→PHB0
     GPIOPinConfigure(GPIO_PD6_PHA0);
@@ -89,11 +88,7 @@ void PortD_Config_QEI(void)
                      GPIO_PIN_TYPE_STD_WPU);
 
     // Configure & start QEI
-    QEIConfigure(QEI0_BASE,
-                 QEI_CONFIG_CAPTURE_A_B |
-                 QEI_CONFIG_QUADRATURE |
-                 QEI_CONFIG_NO_RESET,
-                 0xFFFFFFFF);
+    QEIConfigure(QEI0_BASE, QEI_CONFIG_CAPTURE_A_B | QEI_CONFIG_QUADRATURE | QEI_CONFIG_NO_RESET, 0x000001F4);
     QEIPositionSet(QEI0_BASE, 0);
     QEIEnable(QEI0_BASE);
 }
