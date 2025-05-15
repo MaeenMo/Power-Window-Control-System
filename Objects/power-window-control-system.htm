@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\Objects\power-window-control-system.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\Objects\power-window-control-system.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6190004: Last Updated: Thu May 15 02:43:32 2025
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 6190004: Last Updated: Thu May 15 19:49:05 2025
 <BR><P>
 <H3>Maximum Stack Usage =        324 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -266,17 +266,17 @@ Function Pointers
  <LI><a href="#[89]">prvTaskExitError</a> from port.o(.text.prvTaskExitError) referenced 2 times from port.o(.text.pxPortInitialiseStack)
  <LI><a href="#[8a]">prvTimerTask</a> from timers.o(.text.prvTimerTask) referenced 2 times from timers.o(.text.xTimerCreateTimerTask)
  <LI><a href="#[87]">vDebounceTimerCallback</a> from main.o(.text.vDebounceTimerCallback) referenced 2 times from main.o(.text.main)
- <LI><a href="#[7c]">vDriverWindowElevateTask</a> from main.o(.text.vDriverWindowElevateTask) referenced 2 times from main.o(.text.main)
- <LI><a href="#[7d]">vDriverWindowLowerTask</a> from main.o(.text.vDriverWindowLowerTask) referenced 2 times from main.o(.text.main)
- <LI><a href="#[86]">vEncoderMonitorTask</a> from main.o(.text.vEncoderMonitorTask) referenced 2 times from main.o(.text.main)
- <LI><a href="#[84]">vLCDTask</a> from main.o(.text.vLCDTask) referenced 2 times from main.o(.text.main)
- <LI><a href="#[80]">vLockWindowsTask</a> from main.o(.text.vLockWindowsTask) referenced 2 times from main.o(.text.main)
- <LI><a href="#[82]">vLowerLimitTask</a> from main.o(.text.vLowerLimitTask) referenced 2 times from main.o(.text.main)
- <LI><a href="#[83]">vObstacleDetection</a> from main.o(.text.vObstacleDetection) referenced 2 times from main.o(.text.main)
- <LI><a href="#[7e]">vPassengerWindowElevateTask</a> from main.o(.text.vPassengerWindowElevateTask) referenced 2 times from main.o(.text.main)
- <LI><a href="#[7f]">vPassengerWindowLowerTask</a> from main.o(.text.vPassengerWindowLowerTask) referenced 2 times from main.o(.text.main)
- <LI><a href="#[85]">vStatusProducerTask</a> from main.o(.text.vStatusProducerTask) referenced 2 times from main.o(.text.main)
- <LI><a href="#[81]">vUpperLimitTask</a> from main.o(.text.vUpperLimitTask) referenced 2 times from main.o(.text.main)
+ <LI><a href="#[7c]">vDriverWindowElevateTask</a> from windowtasks.o(.text.vDriverWindowElevateTask) referenced 2 times from main.o(.text.main)
+ <LI><a href="#[7d]">vDriverWindowLowerTask</a> from windowtasks.o(.text.vDriverWindowLowerTask) referenced 2 times from main.o(.text.main)
+ <LI><a href="#[86]">vEncoderMonitorTask</a> from rotaryencoder.o(.text.vEncoderMonitorTask) referenced 2 times from main.o(.text.main)
+ <LI><a href="#[84]">vLCDTask</a> from lcd.o(.text.vLCDTask) referenced 2 times from main.o(.text.main)
+ <LI><a href="#[80]">vLockWindowsTask</a> from safety.o(.text.vLockWindowsTask) referenced 2 times from main.o(.text.main)
+ <LI><a href="#[82]">vLowerLimitTask</a> from safety.o(.text.vLowerLimitTask) referenced 2 times from main.o(.text.main)
+ <LI><a href="#[83]">vObstacleDetection</a> from safety.o(.text.vObstacleDetection) referenced 2 times from main.o(.text.main)
+ <LI><a href="#[7e]">vPassengerWindowElevateTask</a> from windowtasks.o(.text.vPassengerWindowElevateTask) referenced 2 times from main.o(.text.main)
+ <LI><a href="#[7f]">vPassengerWindowLowerTask</a> from windowtasks.o(.text.vPassengerWindowLowerTask) referenced 2 times from main.o(.text.main)
+ <LI><a href="#[85]">vStatusProducerTask</a> from lcd.o(.text.vStatusProducerTask) referenced 2 times from main.o(.text.main)
+ <LI><a href="#[81]">vUpperLimitTask</a> from safety.o(.text.vUpperLimitTask) referenced 2 times from main.o(.text.main)
 </UL>
 <P>
 <H3>
@@ -594,8 +594,8 @@ Global Symbols
 <P><STRONG><a name="[ca]"></a>SysCtlDelay</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, sysctl.o(.emb_text))
 <BR><BR>[Calls]<UL><LI><a href="#[ca]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SysCtlDelay
 </UL>
-<BR>[Called By]<UL><LI><a href="#[ca]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SysCtlDelay
-<LI><a href="#[f6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_I2C_Clear
+<BR>[Called By]<UL><LI><a href="#[f6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_I2C_Clear
+<LI><a href="#[ca]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SysCtlDelay
 <LI><a href="#[fa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_I2C_Init
 <LI><a href="#[11e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SysCtlClockSet
 </UL>
@@ -1555,8 +1555,8 @@ Global Symbols
 <P><STRONG><a name="[a7]"></a>_printf_longlong_dec</STRONG> (Thumb, 108 bytes, Stack size 24 bytes, _printf_longlong_dec.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 72<LI>Call Chain = _printf_longlong_dec &rArr; _printf_int_common &rArr; _printf_post_padding
 </UL>
-<BR>[Calls]<UL><LI><a href="#[db]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_ll_udiv10
-<LI><a href="#[d7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_printf_int_common
+<BR>[Calls]<UL><LI><a href="#[d7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_printf_int_common
+<LI><a href="#[db]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_ll_udiv10
 </UL>
 <BR>[Called By]<UL><LI><a href="#[a9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_printf_llu
 <LI><a href="#[a8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_printf_lld
@@ -1839,8 +1839,8 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[b6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_lib_init_fp_1
 </UL>
 
-<P><STRONG><a name="[7b]"></a>ISRHandlers</STRONG> (Thumb, 722 bytes, Stack size 40 bytes, main.o(.text.ISRHandlers))
-<BR><BR>[Stack]<UL><LI>Max Depth = 216<LI>Call Chain = ISRHandlers &rArr; xTimerGenericCommandFromISR &rArr; xQueueGenericSendFromISR &rArr; prvCopyDataToQueue &rArr; xTaskPriorityDisinherit &rArr; uxListRemove
+<P><STRONG><a name="[7b]"></a>ISRHandlers</STRONG> (Thumb, 942 bytes, Stack size 48 bytes, main.o(.text.ISRHandlers))
+<BR><BR>[Stack]<UL><LI>Max Depth = 224<LI>Call Chain = ISRHandlers &rArr; xTimerGenericCommandFromISR &rArr; xQueueGenericSendFromISR &rArr; prvCopyDataToQueue &rArr; xTaskPriorityDisinherit &rArr; uxListRemove
 </UL>
 <BR>[Calls]<UL><LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GPIOPinRead
 <LI><a href="#[f4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGiveFromISR
@@ -1866,7 +1866,7 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[f7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sendByte
 </UL>
-<BR>[Called By]<UL><LI><a href="#[c4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
+<BR>[Called By]<UL><LI><a href="#[84]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vLCDTask
 </UL>
 
 <P><STRONG><a name="[fa]"></a>LCD_I2C_Init</STRONG> (Thumb, 84 bytes, Stack size 16 bytes, lcd_i2c.o(.text.LCD_I2C_Init))
@@ -1939,7 +1939,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[c4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[10d]"></a>PortC_Config</STRONG> (Thumb, 92 bytes, Stack size 24 bytes, port_config.o(.text.PortC_Config))
+<P><STRONG><a name="[10d]"></a>PortC_Config</STRONG> (Thumb, 104 bytes, Stack size 24 bytes, port_config.o(.text.PortC_Config))
 <BR><BR>[Stack]<UL><LI>Max Depth = 64<LI>Call Chain = PortC_Config &rArr; GPIOPinTypeGPIOInput &rArr; GPIOPadConfigSet
 </UL>
 <BR>[Calls]<UL><LI><a href="#[106]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;IntPrioritySet
@@ -1957,13 +1957,13 @@ Global Symbols
 <BR><BR>[Stack]<UL><LI>Max Depth = 64<LI>Call Chain = PortD_Config_QEI &rArr; GPIOPinTypeQEI &rArr; GPIOPadConfigSet
 </UL>
 <BR>[Calls]<UL><LI><a href="#[112]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;QEIEnable
+<LI><a href="#[111]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;QEIPositionSet
 <LI><a href="#[110]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;QEIConfigure
 <LI><a href="#[10f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GPIOPinTypeQEI
 <LI><a href="#[10a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GPIOPadConfigSet
 <LI><a href="#[109]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GPIOPinConfigure
 <LI><a href="#[100]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SysCtlPeripheralReady
 <LI><a href="#[ff]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SysCtlPeripheralEnable
-<LI><a href="#[111]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;QEIPositionSet
 </UL>
 <BR>[Called By]<UL><LI><a href="#[c4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
@@ -1984,7 +1984,7 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> startup_tm4c123.o(.text)
 </UL>
-<P><STRONG><a name="[8e]"></a>_mutex_acquire</STRONG> (Thumb, 40 bytes, Stack size 16 bytes, clib_os.o(.text._mutex_acquire), UNUSED, KEPT)
+<P><STRONG><a name="[8c]"></a>_mutex_acquire</STRONG> (Thumb, 40 bytes, Stack size 16 bytes, clib_os.o(.text._mutex_acquire), UNUSED, KEPT)
 <BR><BR>[Stack]<UL><LI>Max Depth = 144<LI>Call Chain = _mutex_acquire &rArr; xQueueSemaphoreTake &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
 <BR>[Calls]<UL><LI><a href="#[116]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;is_thread_mode
@@ -1992,13 +1992,13 @@ Global Symbols
 <LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
 </UL>
 
-<P><STRONG><a name="[8c]"></a>_mutex_free</STRONG> (Thumb, 84 bytes, Stack size 16 bytes, clib_os.o(.text._mutex_free), UNUSED, KEPT)
+<P><STRONG><a name="[8e]"></a>_mutex_free</STRONG> (Thumb, 84 bytes, Stack size 16 bytes, clib_os.o(.text._mutex_free), UNUSED, KEPT)
 <BR><BR>[Stack]<UL><LI>Max Depth = 136<LI>Call Chain = _mutex_free &rArr; vQueueDelete &rArr; vPortFree &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
 <BR>[Calls]<UL><LI><a href="#[118]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vQueueDelete
 </UL>
 
-<P><STRONG><a name="[8d]"></a>_mutex_initialize</STRONG> (Thumb, 168 bytes, Stack size 24 bytes, clib_os.o(.text._mutex_initialize), UNUSED, KEPT)
+<P><STRONG><a name="[8b]"></a>_mutex_initialize</STRONG> (Thumb, 168 bytes, Stack size 24 bytes, clib_os.o(.text._mutex_initialize), UNUSED, KEPT)
 <BR><BR>[Stack]<UL><LI>Max Depth = 208<LI>Call Chain = _mutex_initialize &rArr; xQueueCreateMutex &rArr; xQueueGenericCreate &rArr; pvPortMalloc &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
 <BR>[Calls]<UL><LI><a href="#[11a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueCreateMutex
@@ -2006,7 +2006,7 @@ Global Symbols
 <LI><a href="#[115]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;os_kernel_is_active
 </UL>
 
-<P><STRONG><a name="[8b]"></a>_mutex_release</STRONG> (Thumb, 42 bytes, Stack size 16 bytes, clib_os.o(.text._mutex_release), UNUSED, KEPT)
+<P><STRONG><a name="[8d]"></a>_mutex_release</STRONG> (Thumb, 42 bytes, Stack size 16 bytes, clib_os.o(.text._mutex_release), UNUSED, KEPT)
 <BR><BR>[Stack]<UL><LI>Max Depth = 144<LI>Call Chain = _mutex_release &rArr; xQueueGenericSend &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
 <BR>[Calls]<UL><LI><a href="#[116]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;is_thread_mode
@@ -2027,7 +2027,7 @@ Global Symbols
 <LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vDriverWindowElevateTask
 </UL>
 
-<P><STRONG><a name="[c4]"></a>main</STRONG> (Thumb, 812 bytes, Stack size 48 bytes, main.o(.text.main))
+<P><STRONG><a name="[c4]"></a>main</STRONG> (Thumb, 784 bytes, Stack size 48 bytes, main.o(.text.main))
 <BR><BR>[Stack]<UL><LI>Max Depth = 292 + Unknown Stack Size
 <LI>Call Chain = main &rArr; vTaskStartScheduler &rArr; prvCreateIdleTasks &rArr; xTaskCreateStatic &rArr; prvCreateStaticTask &rArr; prvInitialiseNewTask &rArr; pxPortInitialiseStack
 </UL>
@@ -2036,7 +2036,6 @@ Global Symbols
 <LI><a href="#[122]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskCreate
 <LI><a href="#[121]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GPIOIntRegister
 <LI><a href="#[120]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericCreate
-<LI><a href="#[f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_I2C_CreateChar
 <LI><a href="#[fa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_I2C_Init
 <LI><a href="#[11f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;I2CMasterInitExpClk
 <LI><a href="#[f8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SysCtlClockGet
@@ -2098,11 +2097,11 @@ Global Symbols
 <LI><a href="#[7c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vDriverWindowElevateTask
 </UL>
 
-<P><STRONG><a name="[15c]"></a>trigger_limit_semaphore</STRONG> (Thumb, 98 bytes, Stack size 32 bytes, main.o(.text.trigger_limit_semaphore))
+<P><STRONG><a name="[15c]"></a>trigger_limit_semaphore</STRONG> (Thumb, 98 bytes, Stack size 32 bytes, helper_functions.o(.text.trigger_limit_semaphore))
 <BR><BR>[Stack]<UL><LI>Max Depth = 160<LI>Call Chain = trigger_limit_semaphore &rArr; xQueueGenericSend &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
-<BR>[Calls]<UL><LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
-<LI><a href="#[15d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelay
+<BR>[Calls]<UL><LI><a href="#[15d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelay
+<LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
 </UL>
 <BR>[Called By]<UL><LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vEncoderMonitorTask
 </UL>
@@ -2159,48 +2158,49 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(.text.main)
 </UL>
-<P><STRONG><a name="[7c]"></a>vDriverWindowElevateTask</STRONG> (Thumb, 368 bytes, Stack size 24 bytes, main.o(.text.vDriverWindowElevateTask))
+<P><STRONG><a name="[7c]"></a>vDriverWindowElevateTask</STRONG> (Thumb, 368 bytes, Stack size 24 bytes, windowtasks.o(.text.vDriverWindowElevateTask))
 <BR><BR>[Stack]<UL><LI>Max Depth = 152<LI>Call Chain = vDriverWindowElevateTask &rArr; xQueueSemaphoreTake &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
-<BR>[Calls]<UL><LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;stopWindow
-<LI><a href="#[11c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;closeWindow
+<BR>[Calls]<UL><LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
 <LI><a href="#[15d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelay
-<LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
+<LI><a href="#[11c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;closeWindow
+<LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;stopWindow
 <LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GPIOPinRead
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(.text.main)
 </UL>
-<P><STRONG><a name="[7d]"></a>vDriverWindowLowerTask</STRONG> (Thumb, 376 bytes, Stack size 24 bytes, main.o(.text.vDriverWindowLowerTask))
+<P><STRONG><a name="[7d]"></a>vDriverWindowLowerTask</STRONG> (Thumb, 376 bytes, Stack size 24 bytes, windowtasks.o(.text.vDriverWindowLowerTask))
 <BR><BR>[Stack]<UL><LI>Max Depth = 152<LI>Call Chain = vDriverWindowLowerTask &rArr; xQueueSemaphoreTake &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
-<BR>[Calls]<UL><LI><a href="#[125]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;openWindow
-<LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;stopWindow
+<BR>[Calls]<UL><LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
 <LI><a href="#[15d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelay
-<LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
+<LI><a href="#[125]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;openWindow
+<LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;stopWindow
 <LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GPIOPinRead
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(.text.main)
 </UL>
-<P><STRONG><a name="[86]"></a>vEncoderMonitorTask</STRONG> (Thumb, 876 bytes, Stack size 32 bytes, main.o(.text.vEncoderMonitorTask))
+<P><STRONG><a name="[86]"></a>vEncoderMonitorTask</STRONG> (Thumb, 892 bytes, Stack size 32 bytes, rotaryencoder.o(.text.vEncoderMonitorTask))
 <BR><BR>[Stack]<UL><LI>Max Depth = 192<LI>Call Chain = vEncoderMonitorTask &rArr; trigger_limit_semaphore &rArr; xQueueGenericSend &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
-<BR>[Calls]<UL><LI><a href="#[15c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;trigger_limit_semaphore
-<LI><a href="#[161]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;QEIPositionGet
+<BR>[Calls]<UL><LI><a href="#[161]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;QEIPositionGet
 <LI><a href="#[160]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;QEIDirectionGet
-<LI><a href="#[111]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;QEIPositionSet
 <LI><a href="#[15d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelay
+<LI><a href="#[15c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;trigger_limit_semaphore
+<LI><a href="#[111]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;QEIPositionSet
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(.text.main)
 </UL>
-<P><STRONG><a name="[84]"></a>vLCDTask</STRONG> (Thumb, 266 bytes, Stack size 48 bytes, main.o(.text.vLCDTask))
+<P><STRONG><a name="[84]"></a>vLCDTask</STRONG> (Thumb, 294 bytes, Stack size 48 bytes, lcd.o(.text.vLCDTask))
 <BR><BR>[Stack]<UL><LI>Max Depth = 184 + Unknown Stack Size
 <LI>Call Chain = vLCDTask &rArr; snprintf &rArr; _printf_char_common &rArr; __printf
 </UL>
-<BR>[Calls]<UL><LI><a href="#[fd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_I2C_WriteChar
+<BR>[Calls]<UL><LI><a href="#[14c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueReceive
+<LI><a href="#[fd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_I2C_WriteChar
 <LI><a href="#[fb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_I2C_Print
 <LI><a href="#[fc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_I2C_SetCursor
 <LI><a href="#[f6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_I2C_Clear
-<LI><a href="#[14c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueReceive
+<LI><a href="#[f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_I2C_CreateChar
 <LI><a href="#[cb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;snprintf
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(.text.main)
@@ -2234,60 +2234,62 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[15e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskSuspend
 </UL>
 
-<P><STRONG><a name="[80]"></a>vLockWindowsTask</STRONG> (Thumb, 182 bytes, Stack size 16 bytes, main.o(.text.vLockWindowsTask))
+<P><STRONG><a name="[80]"></a>vLockWindowsTask</STRONG> (Thumb, 182 bytes, Stack size 16 bytes, safety.o(.text.vLockWindowsTask))
 <BR><BR>[Stack]<UL><LI>Max Depth = 144<LI>Call Chain = vLockWindowsTask &rArr; xQueueSemaphoreTake &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
 <BR>[Calls]<UL><LI><a href="#[162]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskResume
-<LI><a href="#[15e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskSuspend
-<LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;stopWindow
 <LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
+<LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;stopWindow
+<LI><a href="#[15e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskSuspend
 <LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GPIOPinRead
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(.text.main)
 </UL>
-<P><STRONG><a name="[82]"></a>vLowerLimitTask</STRONG> (Thumb, 244 bytes, Stack size 24 bytes, main.o(.text.vLowerLimitTask))
+<P><STRONG><a name="[82]"></a>vLowerLimitTask</STRONG> (Thumb, 288 bytes, Stack size 24 bytes, safety.o(.text.vLowerLimitTask))
 <BR><BR>[Stack]<UL><LI>Max Depth = 152<LI>Call Chain = vLowerLimitTask &rArr; xQueueSemaphoreTake &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
-<BR>[Calls]<UL><LI><a href="#[111]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;QEIPositionSet
-<LI><a href="#[162]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskResume
-<LI><a href="#[15e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskSuspend
-<LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;stopWindow
+<BR>[Calls]<UL><LI><a href="#[162]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskResume
 <LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
+<LI><a href="#[161]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;QEIPositionGet
+<LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
+<LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;stopWindow
+<LI><a href="#[111]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;QEIPositionSet
+<LI><a href="#[15e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskSuspend
 <LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GPIOPinRead
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(.text.main)
 </UL>
-<P><STRONG><a name="[83]"></a>vObstacleDetection</STRONG> (Thumb, 180 bytes, Stack size 24 bytes, main.o(.text.vObstacleDetection))
+<P><STRONG><a name="[83]"></a>vObstacleDetection</STRONG> (Thumb, 174 bytes, Stack size 24 bytes, safety.o(.text.vObstacleDetection))
 <BR><BR>[Stack]<UL><LI>Max Depth = 152<LI>Call Chain = vObstacleDetection &rArr; xQueueSemaphoreTake &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
 <BR>[Calls]<UL><LI><a href="#[162]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskResume
-<LI><a href="#[15e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskSuspend
+<LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
+<LI><a href="#[15d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelay
 <LI><a href="#[125]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;openWindow
 <LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;stopWindow
-<LI><a href="#[15d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelay
-<LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
+<LI><a href="#[15e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskSuspend
 <LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GPIOPinRead
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(.text.main)
 </UL>
-<P><STRONG><a name="[7e]"></a>vPassengerWindowElevateTask</STRONG> (Thumb, 392 bytes, Stack size 32 bytes, main.o(.text.vPassengerWindowElevateTask))
-<BR><BR>[Stack]<UL><LI>Max Depth = 160<LI>Call Chain = vPassengerWindowElevateTask &rArr; xQueueSemaphoreTake &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
+<P><STRONG><a name="[7e]"></a>vPassengerWindowElevateTask</STRONG> (Thumb, 418 bytes, Stack size 24 bytes, windowtasks.o(.text.vPassengerWindowElevateTask))
+<BR><BR>[Stack]<UL><LI>Max Depth = 152<LI>Call Chain = vPassengerWindowElevateTask &rArr; xQueueSemaphoreTake &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
-<BR>[Calls]<UL><LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;stopWindow
+<BR>[Calls]<UL><LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
+<LI><a href="#[15d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelay
 <LI><a href="#[11c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;closeWindow
-<LI><a href="#[15d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelay
-<LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
+<LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;stopWindow
 <LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GPIOPinRead
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(.text.main)
 </UL>
-<P><STRONG><a name="[7f]"></a>vPassengerWindowLowerTask</STRONG> (Thumb, 400 bytes, Stack size 32 bytes, main.o(.text.vPassengerWindowLowerTask))
-<BR><BR>[Stack]<UL><LI>Max Depth = 160<LI>Call Chain = vPassengerWindowLowerTask &rArr; xQueueSemaphoreTake &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
+<P><STRONG><a name="[7f]"></a>vPassengerWindowLowerTask</STRONG> (Thumb, 424 bytes, Stack size 24 bytes, windowtasks.o(.text.vPassengerWindowLowerTask))
+<BR><BR>[Stack]<UL><LI>Max Depth = 152<LI>Call Chain = vPassengerWindowLowerTask &rArr; xQueueSemaphoreTake &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
-<BR>[Calls]<UL><LI><a href="#[125]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;openWindow
-<LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;stopWindow
+<BR>[Calls]<UL><LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
 <LI><a href="#[15d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelay
-<LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
+<LI><a href="#[125]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;openWindow
+<LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;stopWindow
 <LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GPIOPinRead
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(.text.main)
@@ -2304,11 +2306,11 @@ Global Symbols
 <LI><a href="#[148]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvIsQueueFull
 <LI><a href="#[142]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericReset
 <LI><a href="#[150]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskResumeAll
-<LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
 <LI><a href="#[14c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueReceive
 <LI><a href="#[162]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskResume
-<LI><a href="#[15e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskSuspend
 <LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
+<LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
+<LI><a href="#[15e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskSuspend
 <LI><a href="#[12d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvCheckForValidListAndQueue
 </UL>
 
@@ -2324,11 +2326,11 @@ Global Symbols
 <LI><a href="#[148]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvIsQueueFull
 <LI><a href="#[142]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericReset
 <LI><a href="#[150]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskResumeAll
-<LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
 <LI><a href="#[14c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueReceive
 <LI><a href="#[162]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskResume
-<LI><a href="#[15e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskSuspend
 <LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
+<LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
+<LI><a href="#[15e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskSuspend
 <LI><a href="#[12d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvCheckForValidListAndQueue
 </UL>
 
@@ -2354,7 +2356,7 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[13e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vPortFree
 </UL>
-<BR>[Called By]<UL><LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_mutex_free
+<BR>[Called By]<UL><LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_mutex_free
 </UL>
 
 <P><STRONG><a name="[151]"></a>vQueueWaitForMessageRestricted</STRONG> (Thumb, 100 bytes, Stack size 24 bytes, queue.o(.text.vQueueWaitForMessageRestricted))
@@ -2368,11 +2370,11 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[14e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvProcessTimerOrBlockTask
 </UL>
 
-<P><STRONG><a name="[85]"></a>vStatusProducerTask</STRONG> (Thumb, 146 bytes, Stack size 32 bytes, main.o(.text.vStatusProducerTask))
+<P><STRONG><a name="[85]"></a>vStatusProducerTask</STRONG> (Thumb, 146 bytes, Stack size 32 bytes, lcd.o(.text.vStatusProducerTask))
 <BR><BR>[Stack]<UL><LI>Max Depth = 160<LI>Call Chain = vStatusProducerTask &rArr; xQueueGenericSend &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
-<BR>[Calls]<UL><LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
-<LI><a href="#[15d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelay
+<BR>[Calls]<UL><LI><a href="#[15d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelay
+<LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(.text.main)
 </UL>
@@ -2397,9 +2399,9 @@ Global Symbols
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = vTaskInternalSetTimeOutState
 </UL>
 <BR>[Called By]<UL><LI><a href="#[176]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskCheckForTimeOut
-<LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
 <LI><a href="#[14c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueReceive
 <LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
+<LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
 </UL>
 
 <P><STRONG><a name="[157]"></a>vTaskMissedYield</STRONG> (Thumb, 14 bytes, Stack size 0 bytes, tasks.o(.text.vTaskMissedYield))
@@ -2412,9 +2414,9 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[126]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvAddCurrentTaskToDelayedList
 <LI><a href="#[128]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vListInsert
 </UL>
-<BR>[Called By]<UL><LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
-<LI><a href="#[14c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueReceive
+<BR>[Called By]<UL><LI><a href="#[14c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueReceive
 <LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
+<LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
 </UL>
 
 <P><STRONG><a name="[164]"></a>vTaskPlaceOnEventListRestricted</STRONG> (Thumb, 100 bytes, Stack size 24 bytes, tasks.o(.text.vTaskPlaceOnEventListRestricted))
@@ -2478,10 +2480,10 @@ Global Symbols
 <P><STRONG><a name="[14f]"></a>vTaskSuspendAll</STRONG> (Thumb, 16 bytes, Stack size 0 bytes, tasks.o(.text.vTaskSuspendAll))
 <BR><BR>[Called By]<UL><LI><a href="#[13e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vPortFree
 <LI><a href="#[13d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pvPortMalloc
-<LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
 <LI><a href="#[14c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueReceive
-<LI><a href="#[15d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelay
 <LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
+<LI><a href="#[15d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelay
+<LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
 <LI><a href="#[14e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvProcessTimerOrBlockTask
 </UL>
 
@@ -2495,14 +2497,16 @@ Global Symbols
 <LI><a href="#[15e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskSuspend
 </UL>
 
-<P><STRONG><a name="[81]"></a>vUpperLimitTask</STRONG> (Thumb, 258 bytes, Stack size 24 bytes, main.o(.text.vUpperLimitTask))
+<P><STRONG><a name="[81]"></a>vUpperLimitTask</STRONG> (Thumb, 298 bytes, Stack size 24 bytes, safety.o(.text.vUpperLimitTask))
 <BR><BR>[Stack]<UL><LI>Max Depth = 152<LI>Call Chain = vUpperLimitTask &rArr; xQueueSemaphoreTake &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
-<BR>[Calls]<UL><LI><a href="#[111]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;QEIPositionSet
-<LI><a href="#[162]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskResume
-<LI><a href="#[15e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskSuspend
-<LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;stopWindow
+<BR>[Calls]<UL><LI><a href="#[162]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskResume
 <LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
+<LI><a href="#[161]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;QEIPositionGet
+<LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
+<LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;stopWindow
+<LI><a href="#[111]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;QEIPositionSet
+<LI><a href="#[15e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskSuspend
 <LI><a href="#[f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GPIOPinRead
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(.text.main)
@@ -2533,7 +2537,7 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[140]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvInitialiseMutex
 <LI><a href="#[120]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericCreate
 </UL>
-<BR>[Called By]<UL><LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_mutex_initialize
+<BR>[Called By]<UL><LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_mutex_initialize
 </UL>
 
 <P><STRONG><a name="[119]"></a>xQueueCreateMutexStatic</STRONG> (Thumb, 50 bytes, Stack size 32 bytes, queue.o(.text.xQueueCreateMutexStatic), UNUSED, KEPT)
@@ -2542,7 +2546,7 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[140]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvInitialiseMutex
 <LI><a href="#[12f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericCreateStatic
 </UL>
-<BR>[Called By]<UL><LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_mutex_initialize
+<BR>[Called By]<UL><LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_mutex_initialize
 </UL>
 
 <P><STRONG><a name="[120]"></a>xQueueGenericCreate</STRONG> (Thumb, 134 bytes, Stack size 40 bytes, queue.o(.text.xQueueGenericCreate))
@@ -2591,9 +2595,11 @@ Global Symbols
 <LI><a href="#[14f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskSuspendAll
 </UL>
 <BR>[Called By]<UL><LI><a href="#[140]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvInitialiseMutex
-<LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_mutex_release
+<LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_mutex_release
 <LI><a href="#[15c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;trigger_limit_semaphore
 <LI><a href="#[85]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vStatusProducerTask
+<LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vLowerLimitTask
+<LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vUpperLimitTask
 </UL>
 
 <P><STRONG><a name="[177]"></a>xQueueGenericSendFromISR</STRONG> (Thumb, 214 bytes, Stack size 64 bytes, queue.o(.text.xQueueGenericSendFromISR))
@@ -2652,7 +2658,7 @@ Global Symbols
 <LI><a href="#[150]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskResumeAll
 <LI><a href="#[14f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskSuspendAll
 </UL>
-<BR>[Called By]<UL><LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_mutex_acquire
+<BR>[Called By]<UL><LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_mutex_acquire
 <LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vObstacleDetection
 <LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vLowerLimitTask
 <LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vUpperLimitTask
@@ -2670,9 +2676,9 @@ Global Symbols
 <LI><a href="#[12c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vPortExitCritical
 <LI><a href="#[12a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vPortEnterCritical
 </UL>
-<BR>[Called By]<UL><LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
-<LI><a href="#[14c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueReceive
+<BR>[Called By]<UL><LI><a href="#[14c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueReceive
 <LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
+<LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
 </UL>
 
 <P><STRONG><a name="[122]"></a>xTaskCreate</STRONG> (Thumb, 82 bytes, Stack size 40 bytes, tasks.o(.text.xTaskCreate))
@@ -2746,9 +2752,9 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[155]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvUnlockQueue
 <LI><a href="#[142]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericReset
 <LI><a href="#[177]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSendFromISR
-<LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
 <LI><a href="#[14c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueReceive
 <LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
+<LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
 <LI><a href="#[f4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGiveFromISR
 </UL>
 
@@ -2762,10 +2768,10 @@ Global Symbols
 </UL>
 <BR>[Called By]<UL><LI><a href="#[13e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vPortFree
 <LI><a href="#[13d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pvPortMalloc
-<LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
 <LI><a href="#[14c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueReceive
-<LI><a href="#[15d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelay
 <LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
+<LI><a href="#[15d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vTaskDelay
+<LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
 <LI><a href="#[14e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvProcessTimerOrBlockTask
 </UL>
 
@@ -2964,9 +2970,9 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[107]"></a>GPIOPinWrite</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, gpio.o(i.GPIOPinWrite))
-<BR><BR>[Called By]<UL><LI><a href="#[125]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;openWindow
+<BR><BR>[Called By]<UL><LI><a href="#[11c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;closeWindow
+<LI><a href="#[125]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;openWindow
 <LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;stopWindow
-<LI><a href="#[11c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;closeWindow
 <LI><a href="#[fe]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;PortA_Config
 </UL>
 
@@ -3021,6 +3027,8 @@ Global Symbols
 
 <P><STRONG><a name="[161]"></a>QEIPositionGet</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, qei.o(i.QEIPositionGet))
 <BR><BR>[Called By]<UL><LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vEncoderMonitorTask
+<LI><a href="#[82]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vLowerLimitTask
+<LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vUpperLimitTask
 </UL>
 
 <P><STRONG><a name="[111]"></a>QEIPositionSet</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, qei.o(i.QEIPositionSet))
@@ -3033,8 +3041,8 @@ Global Symbols
 <P><STRONG><a name="[f8]"></a>SysCtlClockGet</STRONG> (Thumb, 314 bytes, Stack size 12 bytes, sysctl.o(i.SysCtlClockGet))
 <BR><BR>[Stack]<UL><LI>Max Depth = 12<LI>Call Chain = SysCtlClockGet
 </UL>
-<BR>[Called By]<UL><LI><a href="#[11d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;delay_us
-<LI><a href="#[f6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_I2C_Clear
+<BR>[Called By]<UL><LI><a href="#[f6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_I2C_Clear
+<LI><a href="#[11d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;delay_us
 <LI><a href="#[fa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LCD_I2C_Init
 <LI><a href="#[c4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
@@ -3172,16 +3180,16 @@ Local Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[113]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskGetSchedulerState
 </UL>
-<BR>[Called By]<UL><LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_mutex_release
-<LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_mutex_acquire
-<LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_mutex_initialize
+<BR>[Called By]<UL><LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_mutex_release
+<LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_mutex_acquire
+<LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_mutex_initialize
 </UL>
 
 <P><STRONG><a name="[116]"></a>is_thread_mode</STRONG> (Thumb, 32 bytes, Stack size 8 bytes, clib_os.o(.text.is_thread_mode), UNUSED, KEPT)
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = is_thread_mode
 </UL>
-<BR>[Called By]<UL><LI><a href="#[8b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_mutex_release
-<LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_mutex_acquire
+<BR>[Called By]<UL><LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_mutex_release
+<LI><a href="#[8c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_mutex_acquire
 </UL>
 
 <P><STRONG><a name="[89]"></a>prvTaskExitError</STRONG> (Thumb, 38 bytes, Stack size 8 bytes, port.o(.text.prvTaskExitError))
@@ -3257,9 +3265,9 @@ Local Symbols
 <LI><a href="#[12a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vPortEnterCritical
 </UL>
 <BR>[Called By]<UL><LI><a href="#[151]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;vQueueWaitForMessageRestricted
-<LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
 <LI><a href="#[14c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueReceive
 <LI><a href="#[117]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueSemaphoreTake
+<LI><a href="#[11b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
 </UL>
 
 <P><STRONG><a name="[147]"></a>prvIsQueueEmpty</STRONG> (Thumb, 40 bytes, Stack size 16 bytes, queue.o(.text.prvIsQueueEmpty))
@@ -3511,11 +3519,11 @@ Local Symbols
 <P><STRONG><a name="[e0]"></a>_fp_digits</STRONG> (Thumb, 432 bytes, Stack size 96 bytes, _printf_fp_dec.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 220<LI>Call Chain = _fp_digits &rArr; _btod_etento &rArr; _btod_emul &rArr; _e2e
 </UL>
-<BR>[Calls]<UL><LI><a href="#[db]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_ll_udiv10
-<LI><a href="#[e4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_btod_emul
+<BR>[Calls]<UL><LI><a href="#[e4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_btod_emul
 <LI><a href="#[e3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_btod_ediv
 <LI><a href="#[e2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_btod_d2e
 <LI><a href="#[e1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_btod_etento
+<LI><a href="#[db]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_ll_udiv10
 </UL>
 <BR>[Called By]<UL><LI><a href="#[e5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_printf_fp_dec_real
 </UL>

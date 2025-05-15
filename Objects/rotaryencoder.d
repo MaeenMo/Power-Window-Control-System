@@ -1,4 +1,6 @@
-./objects/main.o: main.c ..\Power-Window-Control-System\Config.h \
+./objects/rotaryencoder.o: RotaryEncoder.c \
+  ..\Power-Window-Control-System\RotaryEncoder.h \
+  ..\Power-Window-Control-System\Config.h \
   D:\Programs\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdint.h \
   D:\Programs\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdbool.h \
   D:\Programs\Keil_v5\ARM\ARMCLANG\Bin\..\include\stdio.h \
@@ -38,7 +40,5 @@
   ..\Power-Window-Control-System\driverlib\qei.h \
   ..\Power-Window-Control-System\lcd_i2c.h \
   ..\Power-Window-Control-System\Helper_Functions.h \
-  ..\Power-Window-Control-System\WindowTasks.h \
   ..\Power-Window-Control-System\Safety.h \
-  ..\Power-Window-Control-System\RotaryEncoder.h \
-  ..\Power-Window-Control-System\LCD.h
+  ..\Power-Window-Control-System\WindowTasks.h

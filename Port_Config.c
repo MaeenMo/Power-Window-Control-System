@@ -52,10 +52,10 @@ void PortC_Config(void) {
     // Configure pins PC4, PC5, PC6, and PC7 as inputs
     GPIOPinTypeGPIOInput(GPIO_PORTC_BASE, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7);
 
+    GPIOIntTypeSet(GPIO_PORTC_BASE, Window_Lock_Switch, GPIO_BOTH_EDGES);
     GPIOIntTypeSet(GPIO_PORTC_BASE,
-                   Window_Lock_Switch | Window_Upper_Limit |
-                   Window_Lower_Limit | Object_Detection_Sensor
-                   , GPIO_BOTH_EDGES);
+                   Window_Upper_Limit | Window_Lower_Limit |
+                   Object_Detection_Sensor, GPIO_RISING_EDGE);
 
     GPIOIntEnable(GPIO_PORTC_BASE, Window_Lock_Switch | Window_Upper_Limit | Window_Lower_Limit | Object_Detection_Sensor);
 

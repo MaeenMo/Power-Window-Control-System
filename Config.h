@@ -111,22 +111,22 @@
 	
 /* Pins Definition */
 #define Buttons_Motor_Port						GPIO_PORTA_BASE
-#define Passenger_Elevate_Button			(1<<2)
-#define Passenger_Lower_Button			 	(1<<3)
-#define Driver_Elevate_Button					(1<<4)
-#define Driver_Lower_Button					 	(1<<5)
-#define DC_Motor_In1									(1<<6)
-#define DC_Motor_In2									(1<<7)
+#define Passenger_Elevate_Button			    (1<<2)
+#define Passenger_Lower_Button			 	    (1<<3)
+#define Driver_Elevate_Button				    (1<<4)
+#define Driver_Lower_Button					    (1<<5)
+#define DC_Motor_In1						    (1<<6)
+#define DC_Motor_In2						    (1<<7)
 
 
-#define Sensors_Port									GPIO_PORTC_BASE
-#define Object_Detection_Sensor				(1<<4)
+#define Sensors_Port							GPIO_PORTC_BASE
+#define Object_Detection_Sensor				    (1<<4)
 #define Window_Upper_Limit						(1<<5)
 #define Window_Lower_Limit						(1<<6)
 #define Window_Lock_Switch						(1<<7)
 
-#define GPIO_PB2_I2C0SCL        0x00010803
-#define GPIO_PB3_I2C0SDA        0x00010C03
+#define GPIO_PB2_I2C0SCL                        0x00010803
+#define GPIO_PB3_I2C0SDA                        0x00010C03
 
 #define WINDOW_OPEN  		        HIGH // Saving the state of the open window as 1
 #define WINDOW_CLOSED  	            LOW // Saving the state of the closed window as 0
@@ -138,8 +138,8 @@
 #define PD							2
 #define DU							3
 #define DD							4
-#define LOW															0
-#define HIGH														1
+#define LOW							0
+#define HIGH						1
 
 #define DRIVER_WINDOW 0
 #define PASSENGER_WINDOW 1
@@ -150,35 +150,14 @@
 #define GPIO_O_CR             0x524         // GPIO Commit
 #define GPIO_LOCK_KEY         0x4C4F434B    // GPIO lock key
 
-
 void PortA_Config(void);
 void PortB_Config_LCD(void);
 void PortC_Config(void);
 void PortD_Config_QEI(void);
 
-void vDriverWindowElevateTask(void *pvParameters); // RTOS task for controlling (elevating) a passenger window from the driver side
-
-void vDriverWindowLowerTask(void *pvParameters); // RTOS task for controlling (lowering) a passenger window from the driver side
-
-void vPassengerWindowElevateTask(void *pvParameters); // RTOS task for controlling (elevating) a passenger window from the passenger side
-
-void vPassengerWindowLowerTask(void *pvParameters); // RTOS task for controlling (lowering) a passenger window from the passenger side
-
-void vLockWindowsTask(void *pvParameters); // RTOS task for locking/unlocking the control from the passenger side
-
-void vUpperLimitTask(void *pvParameters); // RTOS task for reacting to reaching the upper limit
-
-void vLowerLimitTask(void *pvParameters); // RTOS task for reacting to reaching the lower limit
-
-void vObstacleDetection(void *pvParameters); // RTOS task for detecting obstacles in the path of the window during automatic closing
-
 void vLCDTask(void *pvParameters); // RTOS task for updating the LCD display
 
 void vStatusProducerTask(void *pv); // RTOS task for producing status messages
-
-void vEncoderMonitorTask(void *pvParameters); // RTOS task for monitoring the encoder
-
-void trigger_limit_semaphore(SemaphoreHandle_t xLimitSem, bool* is_encoder_limit); // Function to trigger the semaphore for the limit switch
 
 void ISRHandlers(void); // ISR handler for GPIO interrupts
 
