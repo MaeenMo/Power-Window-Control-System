@@ -1,18 +1,17 @@
 #include "Config.h"
 #include "Helper_Functions.h"
+#include "WindowTasks.h"
+#include "Safety.h"
+#include "RotaryEncoder.h"
 
 /* Global Variables */
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "EndlessLoop"
 
-bool passenger_elevate_button_state; // variable for handling the state of the elevator button from the Passenger side
-bool passenger_lower_button_state; // variable for handling the state of the Lowering button from the Passenger side
-bool lock_state; // variable for handling the state of the lock switch
-
 volatile bool debounce_in_progress = false; // variable for handling the debounce state
 
 // Encoder globals
-static volatile uint32_t TOTAL_PULSES = 250UL;   // pulses from top→bottom
+static volatile uint32_t TOTAL_PULSES = 150UL;   // pulses from top→bottom
 volatile uint32_t windowPct      = 0;        // 0–100%
 
 typedef struct {
@@ -96,8 +95,6 @@ int main(void) {
     xTaskCreate(vLCDTask,            "LCD",   128, NULL, 2, NULL);
     xTaskCreate(vStatusProducerTask, "Stat",  128, NULL, 1, NULL);
     xTaskCreate(vEncoderMonitorTask,       "Enc",   128, NULL, 1, NULL);
-//    xTaskCreate(vCalibrationTask, "Calibrate", 128, NULL, 1, NULL);
-//    vCalibrationTask();
 
     xDebounceTimer = xTimerCreate(
             "DebounceTimer",                // Timer name
@@ -141,7 +138,7 @@ void vLCDTask(void *pvParameters) {
                 }
             }
 
-            // Line 2: lock symbol + percentage
+            // Line 2: lock symbol + window percentage
             LCD_I2C_SetCursor(1, 0);
             LCD_I2C_Print("WinLk");
             LCD_I2C_WriteChar(msg.lock_state ? 1 : 0);
@@ -151,9 +148,9 @@ void vLCDTask(void *pvParameters) {
     }
 }
 
-//—– Periodic status producer (for now sends static “0% stopped unlocked”) —–//
+//—– Periodic status producer —–//
 void vStatusProducerTask(void *pv) {
-    StatusMsg_t msg, prev_msg = {-1, -1, 255};
+    StatusMsg_t msg, prev_msg = {-1, -1, 255}; // Initialize to invalid values
 
     while (1) {
         msg.window_state  = last_task;
@@ -255,7 +252,7 @@ void vPassengerWindowElevateTask(void *pvParameters) {
 
         // Debounce
         vTaskDelay(pdMS_TO_TICKS(200));
-        bool passenger_elevate_button_state = GPIOPinRead(Buttons_Motor_Port, Passenger_Elevate_Button);
+        passenger_elevate_button_state = GPIOPinRead(Buttons_Motor_Port, Passenger_Elevate_Button);
 
         if (passenger_elevate_button_state == HIGH && window_state != WINDOW_CLOSED) {
             // === MANUAL MODE ===
@@ -291,7 +288,7 @@ void vPassengerWindowLowerTask(void *pvParameters) {
 
         // Debounce
         vTaskDelay(pdMS_TO_TICKS(200));
-        bool passenger_lower_button_state = GPIOPinRead(Buttons_Motor_Port, Passenger_Lower_Button);
+        passenger_lower_button_state = GPIOPinRead(Buttons_Motor_Port, Passenger_Lower_Button);
 
         if (passenger_lower_button_state == HIGH && window_state != WINDOW_OPEN) {
             // === MANUAL MODE ===
@@ -354,7 +351,8 @@ void vUpperLimitTask(void *pvParameters) {
         if (encoder_limit){
             upper_limit_switch_state = HIGH;
             encoder_limit = false;
-        } else upper_limit_switch_state = GPIOPinRead(Sensors_Port, Window_Upper_Limit);
+        }
+        else upper_limit_switch_state = GPIOPinRead(Sensors_Port, Window_Upper_Limit);
 
         // Stopping the motor at upper limit
         if (upper_limit_switch_state == HIGH && operation == UP) {
@@ -363,10 +361,11 @@ void vUpperLimitTask(void *pvParameters) {
             vTaskSuspend(xDriverWindowElevateTaskHandle);
             vTaskSuspend(xPassengerWindowElevateTaskHandle);
             QEIPositionSet(QEI0_BASE, TOTAL_PULSES);
+            pos = QEIPositionGet(QEI0_BASE);
+            prev_pos = pos;
             windowPct = 100;
-            prev_pos = TOTAL_PULSES;
-        }
-        else {
+            xSemaphoreGive(xUpperLimitSem);
+        } else {
             // Re-allow window closing option
             vTaskResume(xDriverWindowElevateTaskHandle);
             vTaskResume(xPassengerWindowElevateTaskHandle);
@@ -382,11 +381,12 @@ void vLowerLimitTask(void *pvParameters) {
         xSemaphoreTake(xLowerLimitSem, portMAX_DELAY);
 
         bool lower_limit_switch_state;
-        
+
         if (encoder_limit){
             lower_limit_switch_state = HIGH;
             encoder_limit = false;
-        } else lower_limit_switch_state = GPIOPinRead(Sensors_Port, Window_Lower_Limit);
+        }
+        else lower_limit_switch_state = GPIOPinRead(Sensors_Port, Window_Lower_Limit);
 
         // Stopping the motor at lower limit
         if (lower_limit_switch_state == HIGH && operation == DOWN) {
@@ -395,8 +395,10 @@ void vLowerLimitTask(void *pvParameters) {
             vTaskSuspend(xDriverWindowLowerTaskHandle);
             vTaskSuspend(xPassengerWindowLowerTaskHandle);
             QEIPositionSet(QEI0_BASE, 0);
+            pos = QEIPositionGet(QEI0_BASE);
+            prev_pos = pos;
             windowPct = 0;
-            prev_pos = 0;
+            xSemaphoreGive(xLowerLimitSem);
         } else {
             // Re-allow window opening option
             vTaskResume(xDriverWindowLowerTaskHandle);
@@ -411,13 +413,12 @@ void vObstacleDetection(void *pvParameters) {
     xSemaphoreTake(xObstacleDetectionSem, 0);
     while (1) {
         xSemaphoreTake(xObstacleDetectionSem, portMAX_DELAY);
-        vTaskDelay(pdMS_TO_TICKS(200));
 
         bool object_detection_switch_state = GPIOPinRead(Sensors_Port,Object_Detection_Sensor);
         // Process the IR sensor state
 
-        if ( object_detection_switch_state == LOW && operation == UP) {  // Function to check if an obstacle is detected
-            objDet = true;
+        if ( object_detection_switch_state == HIGH && operation == UP) {  // Function to check if an obstacle is detected
+            objDet = true; // Set the object detection flag to stop the window in both manual mode & automatic mode
             openWindow(DRIVER_WINDOW);
             vTaskSuspend(xDriverWindowElevateTaskHandle);
             vTaskSuspend(xPassengerWindowElevateTaskHandle);
@@ -438,17 +439,18 @@ void vEncoderMonitorTask(void *pv) {
         if (operation == UP && dir > 0) {
             // Closing: percentage increases
             pos = QEIPositionGet(QEI0_BASE);
-            if (pos > TOTAL_PULSES && pos < 300) {
-                QEIPositionSet(QEI0_BASE, TOTAL_PULSES - 1);
+            if (pos > TOTAL_PULSES && pos < TOTAL_PULSES + 20) {
+                QEIPositionSet(QEI0_BASE, TOTAL_PULSES);
                 pos = QEIPositionGet(QEI0_BASE);
             } else if (pos > 450) {
-                QEIPositionSet(QEI0_BASE, 1);
+                QEIPositionSet(QEI0_BASE, 0);
                 pos = QEIPositionGet(QEI0_BASE);
             }
             if (pos > prev_pos) {
                 windowPct = (pos * 100UL / TOTAL_PULSES);
                 prev_pos = pos;
-            } else QEIPositionSet(QEI0_BASE, prev_pos);
+            }
+            else QEIPositionSet(QEI0_BASE, prev_pos);
             if (windowPct > 100) windowPct = 100;
             if (windowPct == 100){
                 prev_pos = TOTAL_PULSES;
@@ -457,17 +459,18 @@ void vEncoderMonitorTask(void *pv) {
         } else if (operation == DOWN && dir < 0) {
             // Opening: percentage decreases
             pos = QEIPositionGet(QEI0_BASE);
-            if (pos > TOTAL_PULSES && pos < 300) {
-                QEIPositionSet(QEI0_BASE, TOTAL_PULSES - 1);
+            if (pos > TOTAL_PULSES && pos < TOTAL_PULSES + 20) {
+                QEIPositionSet(QEI0_BASE, TOTAL_PULSES);
                 pos = QEIPositionGet(QEI0_BASE);
             } else if (pos > 450) {
-                QEIPositionSet(QEI0_BASE, 1);
+                QEIPositionSet(QEI0_BASE, 0);
                 pos = QEIPositionGet(QEI0_BASE);
             }
             if (pos < prev_pos) {
                 windowPct = (pos * 100UL) / TOTAL_PULSES;
                 prev_pos = pos;
-            } else QEIPositionSet(QEI0_BASE, prev_pos);
+            }
+            else QEIPositionSet(QEI0_BASE, prev_pos);
             if (windowPct < 0) windowPct = 0;
             if (windowPct > 100) windowPct = 100;
             if (windowPct == 0){
@@ -563,11 +566,30 @@ void ISRHandlers(void) {
     }
     else if (c & Window_Upper_Limit) {
         GPIOIntClear(GPIO_PORTC_BASE, Window_Upper_Limit);
-        xSemaphoreGiveFromISR(xUpperLimitSem, &xHigherPriorityTaskWoken);
+
+        uint8_t good = 0;
+        for (uint8_t i = 0; i < 3; ++i) {
+            if (GPIOPinRead(Sensors_Port, Window_Upper_Limit))
+                good++;
+            for (uint8_t i = 0; i < 10; ++i);
+        }
+        if (good == 0x3) {
+            xSemaphoreGiveFromISR(xUpperLimitSem, &xHigherPriorityTaskWoken);
+        }
+
     }
     else if (c & Window_Lower_Limit) {
         GPIOIntClear(GPIO_PORTC_BASE, Window_Lower_Limit);
-        xSemaphoreGiveFromISR(xLowerLimitSem, &xHigherPriorityTaskWoken);
+
+        uint8_t good = 0;
+        for (uint8_t i = 0; i < 3; ++i) {
+            if (GPIOPinRead(Sensors_Port, Window_Lower_Limit))
+                good++;
+            for (uint8_t i = 0; i < 10; i++);
+        }
+        if (good == 0x3) {
+            xSemaphoreGiveFromISR(xLowerLimitSem, &xHigherPriorityTaskWoken);
+        }
     }
     else if (c & Object_Detection_Sensor) {
         GPIOIntClear(GPIO_PORTC_BASE, Object_Detection_Sensor);
