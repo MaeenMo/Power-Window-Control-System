@@ -1,5 +1,6 @@
 #include "Config.h"
 #include "Helper_Functions.h"
+#include "RotaryEncoder.h"
 
 uint8_t last_task = STOP;
 uint8_t window_state = MIDDLE;
@@ -54,4 +55,15 @@ void trigger_limit_semaphore(SemaphoreHandle_t xLimitSem, bool* encoder_limit) {
     xSemaphoreGive(xLimitSem);
     taskYIELD();
     vTaskDelay(pdMS_TO_TICKS(2));
+}
+
+void handle_position_bounds(uint32_t* pos) {
+    *pos = QEIPositionGet(QEI0_BASE);
+    if (*pos > TOTAL_PULSES && *pos < TOTAL_PULSES + 20) {
+        QEIPositionSet(QEI0_BASE, TOTAL_PULSES);
+        *pos = QEIPositionGet(QEI0_BASE);
+    } else if (*pos > 450) {
+        QEIPositionSet(QEI0_BASE, 0);
+        *pos = QEIPositionGet(QEI0_BASE);
+    }
 }

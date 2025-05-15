@@ -38,4 +38,7 @@
   ..\Power-Window-Control-System\driverlib\i2c.h \
   ..\Power-Window-Control-System\driverlib\qei.h \
   ..\Power-Window-Control-System\lcd_i2c.h \
-  ..\Power-Window-Control-System\Helper_Functions.h
+  ..\Power-Window-Control-System\Helper_Functions.h \
+  ..\Power-Window-Control-System\RotaryEncoder.h \
+  ..\Power-Window-Control-System\Safety.h \
+  ..\Power-Window-Control-System\WindowTasks.h

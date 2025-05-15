@@ -12,14 +12,7 @@ void vEncoderMonitorTask(void *pv) {
 
         if (operation == UP && dir > 0) {
             // Closing: percentage increases
-            pos = QEIPositionGet(QEI0_BASE);
-            if (pos > TOTAL_PULSES && pos < TOTAL_PULSES + 20) {
-                QEIPositionSet(QEI0_BASE, TOTAL_PULSES);
-                pos = QEIPositionGet(QEI0_BASE);
-            } else if (pos > 450) {
-                QEIPositionSet(QEI0_BASE, 0);
-                pos = QEIPositionGet(QEI0_BASE);
-            }
+            handle_position_bounds(&pos);
             if (pos > prev_pos) {
                 windowPct = (pos * 100UL / TOTAL_PULSES);
                 prev_pos = pos;
@@ -32,14 +25,7 @@ void vEncoderMonitorTask(void *pv) {
             }
         } else if (operation == DOWN && dir < 0) {
             // Opening: percentage decreases
-            pos = QEIPositionGet(QEI0_BASE);
-            if (pos > TOTAL_PULSES && pos < TOTAL_PULSES + 20) {
-                QEIPositionSet(QEI0_BASE, TOTAL_PULSES);
-                pos = QEIPositionGet(QEI0_BASE);
-            } else if (pos > 450) {
-                QEIPositionSet(QEI0_BASE, 0);
-                pos = QEIPositionGet(QEI0_BASE);
-            }
+            handle_position_bounds(&pos);
             if (pos < prev_pos) {
                 windowPct = (pos * 100UL) / TOTAL_PULSES;
                 prev_pos = pos;

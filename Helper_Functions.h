@@ -21,4 +21,6 @@ void closeWindow(uint8_t window); // Function to close the window
 
 void trigger_limit_semaphore(SemaphoreHandle_t xLimitSem, bool* is_encoder_limit); // Function to trigger the semaphore for the limit switch
 
+void handle_position_bounds(uint32_t* pos); // Function to handle the position bounds of the window
+
 #endif // HELPER_FUNCTIONS_H
