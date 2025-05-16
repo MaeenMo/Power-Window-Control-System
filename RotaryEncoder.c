@@ -12,6 +12,11 @@ void vEncoderMonitorTask(void *pv) {
 
         if (operation == UP && dir > 0) {
             // Closing: percentage increases
+            uint32_t speed = QEIVelocityGet(QEI0_BASE);
+            if (speed < 16) {
+                QEIPositionSet(QEI0_BASE, prev_pos); // ignore as noise
+                continue;
+            }
             handle_position_bounds(&pos);
             if (pos > prev_pos) {
                 windowPct = (pos * 100UL / TOTAL_PULSES);
@@ -25,6 +30,11 @@ void vEncoderMonitorTask(void *pv) {
             }
         } else if (operation == DOWN && dir < 0) {
             // Opening: percentage decreases
+            uint32_t speed = QEIVelocityGet(QEI0_BASE);
+            if (speed < 16) {
+                QEIPositionSet(QEI0_BASE, prev_pos); // ignore as noise
+                continue;
+            }
             handle_position_bounds(&pos);
             if (pos < prev_pos) {
                 windowPct = (pos * 100UL) / TOTAL_PULSES;

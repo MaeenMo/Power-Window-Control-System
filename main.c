@@ -186,7 +186,7 @@ void ISRHandlers(void) {
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
-void vDebounceTimerCallback(void *pv) {
+void vDebounceTimerCallback(TimerHandle_t xTimer) {
     debounce_in_progress = false;
 }
 
