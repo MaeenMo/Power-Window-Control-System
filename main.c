@@ -62,7 +62,7 @@ int main(void) {
 
     xDebounceTimer = xTimerCreate(
             "DebounceTimer",                // Timer name
-            pdMS_TO_TICKS(350),              // 20 ms debounce
+            pdMS_TO_TICKS(350),             // Timer period
             pdFALSE,                        // One-shot timer
             (void*)0,                       // Timer ID
             vDebounceTimerCallback          // Callback function

@@ -155,12 +155,8 @@ void PortB_Config_LCD(void);
 void PortC_Config(void);
 void PortD_Config_QEI(void);
 
-void vLCDTask(void *pvParameters); // RTOS task for updating the LCD display
-
-void vStatusProducerTask(void *pv); // RTOS task for producing status messages
-
 void ISRHandlers(void); // ISR handler for GPIO interrupts
 
-void vDebounceTimerCallback(TimerHandle_t xTimer);  // Callback function for the debounce timer
+void vDebounceTimerCallback(void *pv);  // Callback function for the debounce timer
 
 #endif

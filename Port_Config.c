@@ -8,17 +8,22 @@ void PortA_Config(void) {
     // Configure PA6 & PA7 as outputs and PA2..5 as inputs
     GPIOPinTypeGPIOOutput(GPIO_PORTA_BASE, GPIO_PIN_6 | GPIO_PIN_7);
     GPIOPinTypeGPIOInput(GPIO_PORTA_BASE, GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5);
+
     GPIOIntTypeSet(GPIO_PORTA_BASE,
                    Driver_Elevate_Button | Driver_Lower_Button |
                    Passenger_Elevate_Button | Passenger_Lower_Button
                    , GPIO_RISING_EDGE);
+
+    // Enable the pins for GPIO
     GPIOIntEnable(GPIO_PORTA_BASE,
                   Driver_Elevate_Button | Driver_Lower_Button |
                   Passenger_Elevate_Button | Passenger_Lower_Button);
 
+    // Set the interrupt priority
     IntEnable(INT_GPIOA_TM4C123);
     IntPrioritySet(INT_GPIOA_TM4C123, configMAX_SYSCALL_INTERRUPT_PRIORITY+1);
 
+    // Set the initial state of the motor control pins to LOW
     GPIOPinWrite(GPIO_PORTA_BASE, GPIO_PIN_6 | GPIO_PIN_7, 0);
 }
 
@@ -40,6 +45,8 @@ void PortB_Config_LCD(void)
                      GPIO_PIN_2|GPIO_PIN_3,
                      GPIO_STRENGTH_2MA,
                      GPIO_PIN_TYPE_STD_WPU);
+
+    // Set the I2C pins to I2C mode
     GPIOPinTypeI2CSCL(GPIO_PORTB_BASE, GPIO_PIN_2);
     GPIOPinTypeI2C   (GPIO_PORTB_BASE, GPIO_PIN_3);
 }
@@ -67,9 +74,9 @@ void PortD_Config_QEI(void)
 {
     // Turn on GPIOD and QEI0
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOD);
-    while(!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOD)) {}
+    while(!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOD));
     SysCtlPeripheralEnable(SYSCTL_PERIPH_QEI0);
-    while(!SysCtlPeripheralReady(SYSCTL_PERIPH_QEI0)) {}
+    while(!SysCtlPeripheralReady(SYSCTL_PERIPH_QEI0));
 
     // Unlock PD7
     HWREG(GPIO_PORTD_BASE + GPIO_O_LOCK) = GPIO_LOCK_KEY;
