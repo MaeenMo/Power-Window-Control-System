@@ -156,50 +156,34 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>594</LineNumber>
+          <LineNumber>16</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>6820</Address>
+          <Address>16152</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>.\main.c</Filename>
+          <Filename>.\RotaryEncoder.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\power_window_control_system\main.c\594</Expression>
+          <Expression>\\power_window_control_system\RotaryEncoder.c\16</Expression>
         </Bp>
         <Bp>
           <Number>1</Number>
           <Type>0</Type>
-          <LineNumber>608</LineNumber>
+          <LineNumber>34</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>6990</Address>
+          <Address>16432</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>.\main.c</Filename>
+          <Filename>.\RotaryEncoder.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\power_window_control_system\main.c\608</Expression>
-        </Bp>
-        <Bp>
-          <Number>2</Number>
-          <Type>0</Type>
-          <LineNumber>370</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>21182</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>.\main.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\power_window_control_system\main.c\370</Expression>
+          <Expression>\\power_window_control_system\RotaryEncoder.c\34</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>

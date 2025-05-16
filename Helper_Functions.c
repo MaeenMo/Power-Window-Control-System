@@ -45,16 +45,9 @@ void closeWindow(uint8_t window) {
 void trigger_limit_semaphore(SemaphoreHandle_t xLimitSem, bool* encoder_limit) {
     *encoder_limit = true;
 
-    // First trigger to suspend the task
+    // Trigger to suspend the task
     xSemaphoreGive(xLimitSem);
     taskYIELD();
-
-    vTaskDelay(pdMS_TO_TICKS(2));
-
-    // Second trigger to resume the task
-    xSemaphoreGive(xLimitSem);
-    taskYIELD();
-    vTaskDelay(pdMS_TO_TICKS(2));
 }
 
 void handle_position_bounds(uint32_t* pos) {

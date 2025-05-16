@@ -157,6 +157,6 @@ void PortD_Config_QEI(void);
 
 void ISRHandlers(void); // ISR handler for GPIO interrupts
 
-void vDebounceTimerCallback(void *pv);  // Callback function for the debounce timer
+void vDebounceTimerCallback(TimerHandle_t xTimer);  // Callback function for the debounce timer
 
 #endif

@@ -96,6 +96,10 @@ void PortD_Config_QEI(void)
 
     // Configure & start QEI
     QEIConfigure(QEI0_BASE, QEI_CONFIG_CAPTURE_A_B | QEI_CONFIG_QUADRATURE | QEI_CONFIG_NO_RESET, 0x000001F4);
+
+    QEIVelocityConfigure(QEI0_BASE, QEI_VELDIV_1, SysCtlClockGet() / 10);
+    QEIVelocityEnable(QEI0_BASE);
+
     QEIPositionSet(QEI0_BASE, 0);
     QEIEnable(QEI0_BASE);
 }
